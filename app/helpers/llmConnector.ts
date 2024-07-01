@@ -12,7 +12,7 @@ const anthropicConnector = async (model: LLMAnthropicModel, messages: LLMMessage
       model: mapModel(model),
       temperature: 0,
       system: getSystemMessage(messages),
-      messages: messages.map(mapMessage),
+      messages: groupMessagesByRole(messages.map(mapMessage)),
       max_tokens: 1000,
     }),
   }).then((r) => r.json())) as Anthropic.Messages.Message;
@@ -50,7 +50,7 @@ const mapMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStream
           source: {
             type: "base64",
             media_type: "image/png",
-            data: message.image,
+            data: message.image.split(",")[1],
           },
         },
       ],
@@ -58,6 +58,29 @@ const mapMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStream
   } else {
     throw new Error("Only text and image messages are supported");
   }
+};
+
+const groupMessagesByRole = (
+  messages: Anthropic.MessageCreateParamsNonStreaming["messages"]
+): Anthropic.MessageCreateParamsNonStreaming["messages"] => {
+  const newMessages = [messages[0]];
+
+  for (let i = 0; i < messages.length - 1; i++) {
+    const message = messages[i];
+    const nextMessage = messages[i + 1];
+
+    if (message.role !== nextMessage.role) {
+      newMessages.push(nextMessage);
+    } else {
+      newMessages[newMessages.length - 1].content = [
+        ...newMessages[newMessages.length - 1].content,
+        ...nextMessage.content,
+      ];
+    }
+  }
+  console.log(newMessages);
+
+  return newMessages;
 };
 
 const mapModel = (model: LLMAnthropicModel): Anthropic.MessageCreateParamsNonStreaming["model"] => {
