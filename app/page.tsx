@@ -93,31 +93,40 @@ export default function Home() {
     }
   };
 
-  const mergeCanvas = async () => {
+  const mergeCanvas = async (): Promise<string | undefined> => {
     const drawing = await canvasRef.current?.exportImage("png"); // Base64 string
     const resultCanvas = resultCanvasRef.current;
 
-    if (drawing && modelImage && resultCanvas) {
-      const context = resultCanvas.getContext("2d");
+    if (!drawing || !modelImage || !resultCanvas) return;
 
-      if (context) {
-        context.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+    const context = resultCanvas.getContext("2d");
 
-        const modelImageEl = new Image();
-        modelImageEl.src = modelImage;
-        modelImageEl.onload = () => {
-          context.drawImage(modelImageEl, 0, 0);
+    if (!context) return;
 
-          const drawingEl = new Image();
-          drawingEl.src = drawing;
-          drawingEl.onload = () => {
-            context.drawImage(drawingEl, 0, 0);
+    context.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
 
-            setImage(resultCanvas.toDataURL());
-          };
-        };
-      }
-    }
+    await new Promise<void>((resolve) => {
+      const modelImageEl = new Image();
+      modelImageEl.src = modelImage;
+      modelImageEl.onload = () => {
+        context.drawImage(modelImageEl, 0, 0);
+        resolve();
+      };
+    });
+
+    await new Promise<void>((resolve) => {
+      const drawingEl = new Image();
+      drawingEl.src = drawing;
+      drawingEl.onload = () => {
+        context.drawImage(drawingEl, 0, 0);
+        resolve();
+      };
+    });
+
+    const image = resultCanvas.toDataURL("image/png");
+    setImage(image);
+
+    return image;
   };
 
   return (
