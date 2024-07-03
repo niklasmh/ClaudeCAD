@@ -74,7 +74,7 @@ const groupMessagesByRole = (
     } else {
       newMessages[newMessages.length - 1].content = [
         ...newMessages[newMessages.length - 1].content,
-        ...nextMessage.content,
+        ...(nextMessage.content as any),
       ];
     }
   }
