@@ -161,7 +161,7 @@ export default function Home() {
                     {loading && <span className="loading loading-spinner loading-sm"></span>}
                   </button>
                 ) : null}
-                <button onClick={runCode} disabled={loading} className="btn btn-success">
+                <button onClick={() => runCode()} disabled={loading} className="btn btn-success">
                   Run code
                 </button>
                 <button onClick={() => runPrompt("fixWithImage")} className="btn btn-success">
