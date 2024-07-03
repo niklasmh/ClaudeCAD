@@ -1,3 +1,3 @@
 export function extractImage(canvasElement: HTMLCanvasElement): string {
-  return canvasElement.toDataURL()
+  return canvasElement.toDataURL("image/png");
 }

@@ -28,11 +28,12 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [basePrompt, setBasePrompt] = useState("Generate a pyramid with a square base.");
   const [loading, setLoading] = useState(false);
-  const [modelImage, setModelImage] = useState<string | null>(null);
-  const [image, setImage] = useState<string | null>(null);
-  const canvasRef = useRef<ReactSketchCanvasRef>(null);
-  const resultCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
   const [strokeColor, setStrokeColor] = useState("#000000");
+  const [showDrawing, setShowDrawing] = useState(false);
+
+  const resultCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const runPrompt = async (type: "newCode" | "fixWithImage" | "fixWithError") => {
     setLoading(true);
@@ -42,7 +43,11 @@ export default function Home() {
       let message = "";
       if (type === "newCode") {
         message = await llmConnector[model]([{ type: "text", text: generateCode(basePrompt), role: "user" }]);
-      } else if (type === "fixWithImage" && image) {
+      } else if (type === "fixWithImage") {
+        const image = await mergeCanvas();
+
+        if (!image) return;
+
         message = await llmConnector[model]([
           { type: "text", text: "Screenshot of JSCAD model:", role: "user" },
           { type: "image", image, role: "user" },
@@ -59,6 +64,8 @@ export default function Home() {
       console.log(message);
       const newCode = extractCodeFromMessage(message);
       setCode(newCode);
+
+      runCode(newCode);
     } catch (e) {
       console.log(e);
     }
@@ -66,19 +73,15 @@ export default function Home() {
     setLoading(false);
   };
 
-  const runCode = async () => {
+  const runCode = async (newCode: string = code) => {
     setError(null);
 
     try {
-      const entities = new Function("jscad", code)(jscad);
+      const entities = new Function("jscad", newCode)(jscad);
       const geometries = geometryTransformer(entities);
       setGeometries(geometries);
-
-      setTimeout(() => {
-        const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-        const modelImage = extractImage(canvas);
-        setModelImage(modelImage);
-      }, 1000);
+      drawingCanvasRef.current?.clearCanvas();
+      setShowDrawing(false);
     } catch (e: any) {
       const details = extractError(e);
       let error = `${details.type}: ${details.message}`;
@@ -94,10 +97,11 @@ export default function Home() {
   };
 
   const mergeCanvas = async (): Promise<string | undefined> => {
-    const drawing = await canvasRef.current?.exportImage("png"); // Base64 string
+    const drawingCanvas = drawingCanvasRef.current;
     const resultCanvas = resultCanvasRef.current;
+    const modelCanvas = document.getElementById("model-canvas") as HTMLCanvasElement;
 
-    if (!drawing || !modelImage || !resultCanvas) return;
+    if (!drawingCanvas || !modelCanvas || !resultCanvas) return;
 
     const context = resultCanvas.getContext("2d");
 
@@ -105,9 +109,11 @@ export default function Home() {
 
     context.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
 
+    const drawing = await drawingCanvas.exportImage("png");
+
     await new Promise<void>((resolve) => {
       const modelImageEl = new Image();
-      modelImageEl.src = modelImage;
+      modelImageEl.src = extractImage(modelCanvas);
       modelImageEl.onload = () => {
         context.drawImage(modelImageEl, 0, 0);
         resolve();
@@ -123,10 +129,7 @@ export default function Home() {
       };
     });
 
-    const image = resultCanvas.toDataURL("image/png");
-    setImage(image);
-
-    return image;
+    return extractImage(resultCanvas);
   };
 
   return (
@@ -134,12 +137,6 @@ export default function Home() {
       <h1 className="text-4xl text-center my-4">ClaudeCAD</h1>
       <div className="relative flex-1 flex flex-col">
         <CodeEditor {...{ code, setCode }} />
-        {modelImage && (
-          <button onClick={() => runPrompt("fixWithImage")} className="btn btn-success self-center">
-            Evaluate
-            {loading && <span className="loading loading-spinner loading-sm"></span>}
-          </button>
-        )}
 
         <div className="w-full flex flex-row gap-4 p-4">
           <textarea
@@ -147,13 +144,11 @@ export default function Home() {
             value={basePrompt}
             onChange={(e) => setBasePrompt(e.target.value)}
           />
-          {(modelImage || error) && (
-            <textarea
-              className="flex-1 input input-primary py-1 px-2 h-[60px]"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-            />
-          )}
+          <textarea
+            className="flex-1 input input-primary py-1 px-2 h-[60px]"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+          />
           <div className="flex flex-col gap-2">
             {code ? (
               <>
@@ -169,6 +164,10 @@ export default function Home() {
                 <button onClick={runCode} disabled={loading} className="btn btn-success">
                   Run code
                 </button>
+                <button onClick={() => runPrompt("fixWithImage")} className="btn btn-success">
+                  Evaluate
+                  {loading && <span className="loading loading-spinner loading-sm"></span>}
+                </button>
               </>
             ) : null}
             <button className="btn btn-primary" onClick={() => runPrompt("newCode")}>
@@ -181,12 +180,13 @@ export default function Home() {
         <div className="relative" style={{ width: 256, height: 256 }}>
           <Viewer geometries={geometries} />
           <ReactSketchCanvas
-            ref={canvasRef}
+            ref={drawingCanvasRef}
             width="256px"
             height="256px"
             strokeColor={strokeColor}
             canvasColor="transparent"
             className="absolute top-0 left-0"
+            style={{ zIndex: showDrawing ? 10 : -1 }}
           />
           <canvas
             ref={resultCanvasRef}
@@ -196,27 +196,49 @@ export default function Home() {
             className="absolute top-0 left-[110%] border-2 border-red-300 rounded-md"
           />
         </div>
+
         <div>
-          <button onClick={() => setStrokeColor("#ff0000")} className="btn bg-red-300 hover:bg-red-300/80 text-black">
+          <button
+            onClick={() => {
+              setStrokeColor("#ff0000");
+              setShowDrawing(true);
+            }}
+            className="btn bg-red-300 hover:bg-red-300/80 text-black"
+          >
             Red
           </button>
           <button
-            onClick={() => setStrokeColor("#00ff00")}
+            onClick={() => {
+              setStrokeColor("#00ff00");
+              setShowDrawing(true);
+            }}
             className="btn bg-green-300 hover:bg-green-300/80 text-black"
           >
             Green
           </button>
-          <button onClick={() => setStrokeColor("#0000ff")} className="btn bg-blue-300 hover:bg-blue-300/80 text-black">
+          <button
+            onClick={() => {
+              setStrokeColor("#0000ff");
+              setShowDrawing(true);
+            }}
+            className="btn bg-blue-300 hover:bg-blue-300/80 text-black"
+          >
             Blue
           </button>
-          <button onClick={() => canvasRef.current?.clearCanvas()} className="btn btn-error">
+          <button
+            onClick={() => {
+              drawingCanvasRef.current?.clearCanvas();
+              setShowDrawing(true);
+            }}
+            className="btn btn-error"
+          >
             Clear
           </button>
         </div>
+
         {error && (
           <div className="fixed bottom-0 left-0 right-0 text-red-500 bg-black/20 whitespace-pre-wrap p-4">{error}</div>
         )}
-        {/*<img src="/test.svg" alt="test" />*/}
       </div>
     </main>
   );

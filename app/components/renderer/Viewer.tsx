@@ -52,7 +52,7 @@ export function Viewer({ geometries }: Props) {
         camera={{ fov: 45, position: [100, 100, 100], far: 1000, near: 0.1 }}
         gl={{ preserveDrawingBuffer: true }}
         onCreated={({ gl }) => {
-          gl.domElement.id = "canvas";
+          gl.domElement.id = "model-canvas";
         }}
       >
         <Camera objectToFit={groupRef.current} />
