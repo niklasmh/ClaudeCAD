@@ -2,7 +2,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Entity } from "../renderer/Entity";
 import { Geometry } from "../models/geometry";
-import { AxesHelper, Box3, Group, Object3D, Object3DEventMap, Sphere, Vector3 } from "three";
+import { AxesHelper, Box3, Group, Object3D, Object3DEventMap, Sphere } from "three";
 import { useRef } from "react";
 
 type CameraProps = { objectToFit: Object3D<Object3DEventMap> | null };
@@ -20,8 +20,10 @@ function Camera({ objectToFit }: CameraProps) {
     const sphere = aabb.getBoundingSphere(new Sphere());
     const { center, radius } = sphere;
     camera.zoom = 120 / radius;
-    controls.current.target.set(center.x, center.y, center.z);
+    camera.near = 0.1 * radius;
     camera.far = 1000 * radius;
+    camera.position.set(center.x + radius, center.y + radius, center.z + radius);
+    controls.current.target.set(center.x, center.y, center.z);
     camera.updateProjectionMatrix();
   }
 
@@ -47,7 +49,7 @@ export function Viewer({ geometries }: Props) {
     <div className="w-[256px] h-[256px] border border-primary rounded-lg">
       <Canvas
         orthographic
-        camera={{ fov: 45, position: [10, 10, 10], far: 1000, near: 0.1 }}
+        camera={{ fov: 45, position: [100, 100, 100], far: 1000, near: 0.1 }}
         gl={{ preserveDrawingBuffer: true }}
         onCreated={({ gl }) => {
           gl.domElement.id = "canvas";
