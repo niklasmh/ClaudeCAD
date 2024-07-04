@@ -5,9 +5,9 @@ import { Geometry } from "../models/geometry";
 import { AxesHelper, Box3, Group, Object3D, Object3DEventMap, Sphere } from "three";
 import { useRef } from "react";
 
-type CameraProps = { objectToFit: Object3D<Object3DEventMap> | null };
+type CameraProps = { objectToFit: Object3D<Object3DEventMap> | null; updateID: string };
 
-function Camera({ objectToFit }: CameraProps) {
+function Camera({ objectToFit, updateID }: CameraProps) {
   const {
     camera,
     //size: { width, height },
@@ -39,9 +39,10 @@ function Camera({ objectToFit }: CameraProps) {
 
 type Props = {
   geometries: Geometry[];
+  updateID: string;
 };
 
-export function Viewer({ geometries }: Props) {
+export function Viewer({ geometries, updateID }: Props) {
   const uuid = Math.random().toString(36).substring(7);
   const groupRef = useRef<Group>(null);
 
@@ -55,7 +56,7 @@ export function Viewer({ geometries }: Props) {
           gl.domElement.id = "model-canvas";
         }}
       >
-        <Camera objectToFit={groupRef.current} />
+        <Camera objectToFit={groupRef.current} updateID={updateID} />
         <group ref={groupRef} rotation={[-Math.PI / 2, 0, 0]}>
           {geometries.map((geometry, i) => (
             <Entity key={uuid + "-" + i} {...geometry} />

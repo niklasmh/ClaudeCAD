@@ -23,6 +23,7 @@ const model: LLMModel = "claude-3.5";
 
 export default function Home() {
   const [geometries, setGeometries] = useState<Geometry[]>([]);
+  const [updateCameraID, setUpdateCameraID] = useState<string>("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
@@ -80,8 +81,12 @@ export default function Home() {
       const entities = new Function("jscad", newCode)(jscad);
       const geometries = geometryTransformer(entities);
       setGeometries(geometries);
-      drawingCanvasRef.current?.clearCanvas();
       setShowDrawing(false);
+      drawingCanvasRef.current?.clearCanvas();
+
+      setTimeout(() => {
+        setUpdateCameraID(Math.random().toString(36).substring(7));
+      }, 100);
     } catch (e: any) {
       const details = extractError(e);
       let error = `${details.type}: ${details.message}`;
@@ -178,7 +183,7 @@ export default function Home() {
         </div>
 
         <div className="relative" style={{ width: 256, height: 256 }}>
-          <Viewer geometries={geometries} />
+          <Viewer geometries={geometries} updateID={updateCameraID} />
           <ReactSketchCanvas
             ref={drawingCanvasRef}
             width="256px"
