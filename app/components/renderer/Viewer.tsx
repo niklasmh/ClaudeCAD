@@ -1,7 +1,7 @@
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Entity } from "../renderer/Entity";
-import { Geometry } from "../models/geometry";
+import { Geometry } from "../../types/geometry";
 import { AxesHelper, Box3, Group, Object3D, Object3DEventMap, Sphere } from "three";
 import { useRef } from "react";
 

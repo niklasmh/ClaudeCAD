@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { LLMAnthropicModel, LLMMessage, LLMModel, LLMTextMessage } from "../components/models/llm";
+import { LLMAnthropicModel, LLMMessage, LLMModel, LLMTextMessage } from "../types/llm";
 
 type LLMConnector = {
   [model in LLMModel]: (messages: LLMMessage[]) => Promise<string>;

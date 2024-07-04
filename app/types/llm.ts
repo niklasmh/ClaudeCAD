@@ -21,3 +21,5 @@ export type LLMAnthropicModel =
   | "claude-3-haiku"
   | "claude-3.5";
 export type LLMModel = LLMAnthropicModel;
+
+export const defaultModel: LLMModel = "claude-3.5";
