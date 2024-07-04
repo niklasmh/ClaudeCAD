@@ -7,6 +7,6 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  plugins: [daisyui],
+  plugins: [daisyui, require("@tailwindcss/typography")],
 };
 export default config;

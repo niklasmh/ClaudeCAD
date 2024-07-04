@@ -1,6 +1,7 @@
 import { LLMMessage, LLMTextMessage } from "@/app/types/llm";
 import { Pencil, RefreshCw, Save, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 type Props = {
   message: LLMTextMessage;
@@ -80,7 +81,7 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
     <div className={`chat group ${isUser ? "chat-end" : "chat-start"}`}>
       <div className="chat-header">{message.model}</div>
       <div className={`chat-bubble relative ${isUser ? "bg-[#2a323c88]" : ""} ${edit ? "w-full p-0" : ""}`}>
-        {!edit && <p>{message.text}</p>}
+        {!edit && <ReactMarkdown className="prose">{message.text}</ReactMarkdown>}
         {edit && (
           <textarea
             className="w-full flex-1 h-[48px] textarea bg-transparent resize-none overflow-hidden border-none !outline-none"

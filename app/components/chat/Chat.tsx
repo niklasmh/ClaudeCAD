@@ -87,7 +87,7 @@ export const Chat = () => {
     if (el) {
       if (el.value.includes("\n")) {
         el.style.height = "auto";
-        el.style.height = `${el.scrollHeight}px`;
+        el.style.height = `${el.scrollHeight + 2}px`;
       } else {
         el.style.height = "auto";
         el.style.height = "48px";
@@ -112,8 +112,8 @@ export const Chat = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col justify-center">
-      <div className="flex flex-col">
+    <div className="w-full flex flex-col justify-center">
+      <div className="flex flex-col max-h-full overflow-y-auto overflow-x-hidden">
         {messages.map((message, index) => (
           <ChatMessage
             key={index}
@@ -124,19 +124,26 @@ export const Chat = () => {
           />
         ))}
       </div>
-      <div className="w-full flex flex-row items-end gap-4 m-4">
-        <textarea
-          className="flex-1 h-[48px] textarea textarea-primary"
-          placeholder="Enter a message..."
-          value={textInput}
-          ref={textareaRef}
-          onChange={(event) => setTextInput(event.target.value)}
-          onKeyDown={handleKeyDown}
-          onInput={handleInputChange}
-        />
-        <button className="btn btn-primary" onClick={() => sendMessage({ textInput })} disabled={sendingMessage}>
-          Send
-        </button>
+      <div
+        className="fixed bottom-0 left-0 right-0 bg-base-100 z-10 pt-4 pb-6"
+        style={{
+          boxShadow: "0 0 20px 5px var(--fallback-b1,oklch(var(--b1)))",
+        }}
+      >
+        <div className="flex flex-row gap-4 items-end max-w-[800px] mx-auto">
+          <textarea
+            className="flex-1 h-[48px] max-h-[400px] textarea textarea-primary"
+            placeholder="Enter a message..."
+            value={textInput}
+            ref={textareaRef}
+            onChange={(event) => setTextInput(event.target.value)}
+            onKeyDown={handleKeyDown}
+            onInput={handleInputChange}
+          />
+          <button className="btn btn-primary" onClick={() => sendMessage({ textInput })} disabled={sendingMessage}>
+            Send
+          </button>
+        </div>
       </div>
       {error && <p className="error">{error}</p>}
     </div>
