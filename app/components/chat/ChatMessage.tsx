@@ -83,7 +83,7 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
         {!edit && <p>{message.text}</p>}
         {edit && (
           <textarea
-            className="w-full flex-1 h-[48px] textarea bg-[#2a323c] resize-none overflow-hidden border-none !outline-none"
+            className="w-full flex-1 h-[48px] textarea bg-transparent resize-none overflow-hidden border-none !outline-none"
             value={currentMessage.text}
             ref={textareaRef}
             onChange={(e) =>
