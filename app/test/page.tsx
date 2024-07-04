@@ -43,23 +43,29 @@ export default function Home() {
     try {
       let message = "";
       if (type === "newCode") {
-        message = await llmConnector[model]([{ type: "text", text: generateCode(basePrompt), role: "user" }]);
+        message = await llmConnector[model]([
+          { type: "text", text: generateCode(basePrompt), role: "user", model, date: new Date().toISOString() },
+        ]);
       } else if (type === "fixWithImage") {
         const image = await mergeCanvas();
 
         if (!image) return;
 
         message = await llmConnector[model]([
-          { type: "text", text: "Screenshot of JSCAD model:", role: "user" },
-          { type: "image", image, role: "user" },
+          { type: "text", text: "Screenshot of JSCAD model:", role: "user", model, date: new Date().toISOString() },
+          { type: "image", image, role: "user", model, date: new Date().toISOString() },
           {
             type: "text",
             text: fixCodeFromImage(basePrompt, prompt, code),
             role: "user",
+            model,
+            date: new Date().toISOString(),
           },
         ]);
       } else if (type === "fixWithError" && error) {
-        message = await llmConnector[model]([{ type: "text", text: fixCodeFromError(code, error), role: "user" }]);
+        message = await llmConnector[model]([
+          { type: "text", text: fixCodeFromError(code, error), role: "user", model, date: new Date().toISOString() },
+        ]);
       }
 
       console.log(message);
