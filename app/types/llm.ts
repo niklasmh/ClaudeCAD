@@ -4,15 +4,19 @@ export type LLMTextMessage = {
   type: "text";
   role: Role;
   text: string;
+  model: LLMModel;
+  date: string;
 };
 
 export type LLMImageMessage = {
   type: "image";
   role: Role;
   image: string;
+  model: LLMModel;
+  date: string;
 };
 
-export type Role = "user" | "system";
+export type Role = "user" | "assistant" | "system";
 
 export type LLMAnthropicModel =
   | "claude-1.2-instant"
