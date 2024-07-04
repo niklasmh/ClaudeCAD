@@ -2,8 +2,9 @@
 
 import { llmConnector } from "@/app/helpers/llmConnector";
 import { useAppStore } from "@/app/store";
-import { LLMMessage } from "@/app/types/llm";
+import { LLMMessage, LLMTextMessage } from "@/app/types/llm";
 import { KeyboardEvent, useRef } from "react";
+import { ChatMessage } from "./ChatMessage";
 
 export const Chat = () => {
   const messages = useAppStore((state) => state.messages);
@@ -20,43 +21,52 @@ export const Chat = () => {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const sendMessage = async () => {
-    if (textInput === "" && imageInput === "") {
-      setError("Please enter a message or upload an image.");
-      return;
-    }
-
+  const sendMessage = async ({
+    textInput,
+    sendFromIndex = Infinity,
+  }: { textInput?: string; sendFromIndex?: number } = {}) => {
     setError(null);
+    setTextInput("");
+    setImageInput("");
     setSendingMessage(true);
 
     try {
-      const userMessage: LLMMessage = {
-        role: "user",
-        type: "text",
-        text: textInput,
-        model,
-        date: new Date().toISOString(),
-      };
-      setMessages([...messages, userMessage]);
+      const filteredMessages = [...messages].filter((_, index) => index <= sendFromIndex);
 
-      const data = await llmConnector[model]([...messages, userMessage]);
+      if (textInput) {
+        const userMessage: LLMMessage = {
+          role: "user",
+          type: "text",
+          text: textInput,
+          model,
+          date: new Date().toISOString(),
+        };
+        filteredMessages.push(userMessage);
+      }
+
+      setMessages(filteredMessages);
+
+      const text = await llmConnector[model](filteredMessages);
 
       const assistantMessage: LLMMessage = {
         role: "assistant",
         type: "text",
-        text: data,
+        text,
         model,
         date: new Date().toISOString(),
       };
 
-      console.log(data);
+      filteredMessages.push(assistantMessage);
 
-      setMessages([...messages, assistantMessage]);
+      console.log(text);
+
+      setMessages(filteredMessages);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
       }
       console.error(error);
+      if (textInput) setImageInput(textInput);
     }
 
     setTextInput("");
@@ -66,7 +76,8 @@ export const Chat = () => {
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
-      sendMessage();
+      event.preventDefault();
+      sendMessage({ textInput });
     }
   };
 
@@ -84,18 +95,33 @@ export const Chat = () => {
     }
   };
 
+  const updateMessage = (message: LLMMessage, index: number) => {
+    const newMessages = [...messages];
+    newMessages[index] = message;
+    setMessages(newMessages);
+  };
+
+  const deleteMessage = (index: number) => {
+    const newMessages = [...messages];
+    newMessages.splice(index, 1);
+    setMessages(newMessages);
+  };
+
+  const onRerun = async (index: number) => {
+    sendMessage({ sendFromIndex: index });
+  };
+
   return (
     <div className="w-full h-full flex flex-col justify-center">
       <div className="flex flex-col">
         {messages.map((message, index) => (
-          <div key={index} className={`chat ${message.role === "user" ? "chat-end" : "chat-start"}`}>
-            <div className="chat-header">{message.model}</div>
-            <div className="chat-bubble">
-              {message.type === "text" && <p>{message.text}</p>}
-              {message.type === "image" && <img src={message.image} alt="Uploaded" />}
-            </div>
-            <div className="chat-footer opacity-50">Sent {new Date(message.date).toLocaleString()}</div>
-          </div>
+          <ChatMessage
+            key={index}
+            message={message as LLMTextMessage}
+            onChange={(message) => updateMessage(message, index)}
+            onDelete={() => deleteMessage(index)}
+            onRerun={() => onRerun(index)}
+          />
         ))}
       </div>
       <div className="w-full flex flex-row items-end gap-4 m-4">
@@ -108,7 +134,7 @@ export const Chat = () => {
           onKeyDown={handleKeyDown}
           onInput={handleInputChange}
         />
-        <button className="btn btn-primary" onClick={sendMessage} disabled={sendingMessage}>
+        <button className="btn btn-primary" onClick={() => sendMessage({ textInput })} disabled={sendingMessage}>
           Send
         </button>
       </div>
