@@ -192,7 +192,7 @@ export const Chat = () => {
               onClick={() => sendMessage({ textInput, imageInput: messages.length === 0 ? "init" : "" })}
               disabled={sendingMessage}
             >
-              Send
+              Send {sendingMessage && <span className="loading loading-spinner loading-sm"></span>}
             </button>
           </div>
         </div>
