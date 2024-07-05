@@ -1,19 +1,22 @@
-import { LLMMessage, LLMTextMessage } from "@/app/types/llm";
+import { LLMImageMessage, LLMMessage } from "@/app/types/llm";
 import { Pencil, RefreshCw, Save, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
+import { SketchInput } from "./SketchInput";
+import { getImageFromCanvas } from "@/app/helpers/extractImage";
 
 type Props = {
-  message: LLMTextMessage;
-  onChange: (message: LLMTextMessage) => void;
+  message: LLMImageMessage;
+  onChange: (message: LLMImageMessage) => void;
   onDelete: () => void;
   onRerun: () => void;
 };
 
-export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => {
+export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) => {
   const [edit, setEdit] = useState<boolean>(false);
-  const [currentMessage, setCurrentMessage] = useState<LLMTextMessage>(message);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
 
   const isUser = message.role === "user";
 
@@ -21,9 +24,10 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
     setEdit(true);
   };
 
-  const handleSaveEditButtonClick = () => {
+  const handleSaveEditButtonClick = async () => {
     setEdit(false);
-    onChange(currentMessage);
+    const image = await getImageFromCanvas(drawingCanvasRef.current);
+    onChange({ ...message, image });
   };
 
   const resizeTextarea = () => {
@@ -38,10 +42,6 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
         el.style.height = "48px";
       }
     }
-  };
-
-  const handleInputChange = () => {
-    resizeTextarea();
   };
 
   useEffect(() => {
@@ -81,19 +81,15 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
     <div className={`chat group ${isUser ? "chat-end" : "chat-start"}`}>
       <div className="chat-header">{message.model}</div>
       <div className={`chat-bubble relative ${isUser ? "bg-[#2a323c88]" : ""} ${edit ? "w-full p-0" : ""}`}>
-        {!edit && <ReactMarkdown className="prose">{message.text}</ReactMarkdown>}
+        {!edit && <img src={message.image} />}
         {edit && (
-          <textarea
-            className="w-full flex-1 h-[48px] textarea bg-transparent resize-none overflow-hidden border-none !outline-none"
-            value={currentMessage.text}
-            ref={textareaRef}
-            onChange={(e) =>
-              setCurrentMessage({
-                ...currentMessage,
-                text: e.target.value,
-              })
-            }
-            onInput={handleInputChange}
+          <SketchInput
+            ref={drawingCanvasRef}
+            height={256}
+            width={256}
+            canvasProps={{
+              backgroundImage: message.image,
+            }}
           />
         )}
         {tools}
