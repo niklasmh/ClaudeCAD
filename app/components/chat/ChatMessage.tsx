@@ -1,4 +1,4 @@
-import { LLMMessage, LLMTextMessage } from "@/app/types/llm";
+import { LLMMessage, LLMTextMessage, modelNames } from "@/app/types/llm";
 import { Pencil, RefreshCw, Save, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -79,7 +79,7 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
 
   return (
     <div className={`chat group ${isUser ? "chat-end" : "chat-start"}`}>
-      <div className="chat-header">{message.model}</div>
+      <div className="chat-header">{modelNames[message.model]}</div>
       <div className={`chat-bubble relative ${isUser ? "bg-[#2a323c88]" : ""} ${edit ? "w-full p-0" : ""}`}>
         {!edit && <ReactMarkdown className="prose">{message.text}</ReactMarkdown>}
         {edit && (

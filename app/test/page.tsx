@@ -19,7 +19,7 @@ import { LLMModel } from "../types/llm";
 import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
 
 const initialGeometries = geometryTransformer(booleanExample());
-const model: LLMModel = "claude-3.5";
+const model = LLMModel.CLAUDE_3_5;
 
 export default function Home() {
   const [geometries, setGeometries] = useState<Geometry[]>([]);

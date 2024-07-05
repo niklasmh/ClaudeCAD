@@ -1,8 +1,7 @@
-import { LLMImageMessage, LLMMessage } from "@/app/types/llm";
+import { LLMImageMessage, modelNames } from "@/app/types/llm";
 import { Pencil, RefreshCw, Save, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
+import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
 import { getImageFromCanvas } from "@/app/helpers/extractImage";
 
@@ -79,7 +78,7 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
 
   return (
     <div className={`chat group ${isUser ? "chat-end" : "chat-start"}`}>
-      <div className="chat-header">{message.model}</div>
+      <div className="chat-header">{modelNames[message.model]}</div>
       <div className={`chat-bubble relative ${isUser ? "bg-[#2a323c88]" : ""} ${edit ? "w-full p-0" : ""}`}>
         {!edit && <img src={message.image} />}
         {edit && (

@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { ForwardedRef, forwardRef, useRef, useState } from "react";
+import { ForwardedRef, forwardRef, useState } from "react";
 import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
 
 type Props = {
