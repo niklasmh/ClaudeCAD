@@ -12,6 +12,29 @@ type Props = {
   canvasProps?: React.ComponentProps<typeof ReactSketchCanvas>;
 };
 
+const colors = [
+  {
+    name: "Black",
+    value: "#000000",
+    className: "bg-black hover:bg-gray-900 text-white",
+  },
+  {
+    name: "Red",
+    value: "#ff0000",
+    className: "bg-red-300 hover:bg-red-300/60 text-black",
+  },
+  {
+    name: "Green",
+    value: "#00ff00",
+    className: "bg-green-300 hover:bg-green-300/60 text-black",
+  },
+  {
+    name: "Blue",
+    value: "#0000ff",
+    className: "bg-blue-300 hover:bg-blue-300/60 text-black",
+  },
+];
+
 export const SketchInput = forwardRef(
   (
     { className = "", transparent, width = 256, height = 256, onClear, toggleEraser, canvasProps }: Props,
@@ -42,42 +65,20 @@ export const SketchInput = forwardRef(
         />
 
         <div className="flex flex-row gap-2">
-          <button
-            onClick={() => {
-              setStrokeColor("#000000");
-              setEraser(false);
-            }}
-            className={`btn btn-sm aspect-square bg-black hover:bg-gray-900 text-white p-0`}
-          >
-            {strokeColor === "#000000" ? <Check /> : ""}
-          </button>
-          <button
-            onClick={() => {
-              setStrokeColor("#ff0000");
-              setEraser(false);
-            }}
-            className={`btn btn-sm aspect-square bg-red-300 hover:bg-red-300/80 text-black p-0`}
-          >
-            {strokeColor === "#ff0000" ? <Check /> : ""}
-          </button>
-          <button
-            onClick={() => {
-              setStrokeColor("#00ff00");
-              setEraser(false);
-            }}
-            className={`btn btn-sm aspect-square bg-green-300 hover:bg-green-300/80 text-black p-0`}
-          >
-            {strokeColor === "#00ff00" ? <Check /> : ""}
-          </button>
-          <button
-            onClick={() => {
-              setStrokeColor("#0000ff");
-              setEraser(false);
-            }}
-            className={`btn btn-sm aspect-square bg-blue-300 hover:bg-blue-300/80 text-black p-0`}
-          >
-            {strokeColor === "#0000ff" ? <Check /> : ""}
-          </button>
+          {colors.map(({ name, value, className }) => (
+            <button
+              key={value}
+              onClick={() => {
+                setStrokeColor(value);
+                setEraser(false);
+              }}
+              className={`btn btn-sm aspect-square ${className} p-0`}
+              title={name}
+            >
+              {!eraser && strokeColor === value ? <Check /> : ""}
+            </button>
+          ))}
+          <div className="divider divider-horizontal m-0" />
           <button
             onClick={handleToggleEraser}
             className={`btn btn-primary btn-sm aspect-square p-0 ${eraser ? "" : "btn-ghost"}`}
