@@ -1,7 +1,6 @@
 import { LLMCodeMessage, modelNames } from "@/app/types/llm";
 import { Pencil, Play, Save, Trash } from "lucide-react";
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
 import { CodeEditor } from "../editor/Editor";
 
 type Props = {

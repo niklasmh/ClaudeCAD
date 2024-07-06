@@ -16,6 +16,7 @@ import { extractCodeFromMessage } from "@/app/helpers/extractCodeFromMessage";
 import { geometryTransformer } from "@/app/helpers/geometryTransformer";
 import { extractError } from "@/app/helpers/extractError";
 import { ModelMessage } from "./ModelMessage";
+import { ErrorMessage } from "./ErrorMessage";
 
 export const Chat = () => {
   const messages = useAppStore((state) => state.messages);
@@ -320,7 +321,17 @@ export const Chat = () => {
               />
             );
           }
-          return <div key={index}>{message.type}</div>;
+          if (message.type === "error") {
+            return (
+              <ErrorMessage
+                key={index}
+                message={message}
+                onFix={() => sendMessage({ sendFromIndex: index })}
+                onDelete={() => deleteMessage(index)}
+              />
+            );
+          }
+          return <div key={index}>{(message as any).type}</div>;
         })}
       </div>
       <div
