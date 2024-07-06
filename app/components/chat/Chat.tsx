@@ -3,7 +3,7 @@
 import * as jscad from "@jscad/modeling";
 import { llmConnector } from "@/app/helpers/llmConnector";
 import { useAppStore } from "@/app/store";
-import { LLMErrorMessage, LLMMessage, LLMModelMessage } from "@/app/types/llm";
+import { LLMCodeMessage, LLMErrorMessage, LLMMessage, LLMModelMessage, LLMTextMessage } from "@/app/types/llm";
 import { KeyboardEvent, useRef } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
@@ -86,27 +86,43 @@ export const Chat = () => {
         buildMessageHistory(filteredMessages, "generate-model"),
         "text-and-image"
       );
-      const code = extractCodeFromMessage(textWithCode);
 
-      const assistantMessage: LLMMessage = {
-        role: "assistant",
-        type: "code",
-        text: code,
-        model,
-        date: new Date().toISOString(),
-      };
+      try {
+        const code = extractCodeFromMessage(textWithCode);
 
-      filteredMessages.push(assistantMessage);
-      setMessages(filteredMessages);
+        const assistantMessage: LLMCodeMessage = {
+          role: "assistant",
+          type: "code",
+          text: code,
+          model,
+          date: new Date().toISOString(),
+        };
 
-      // Run code
-      const runMessage = runCode(code);
-      filteredMessages.push(runMessage);
-      setMessages(filteredMessages);
+        filteredMessages.push(assistantMessage);
+        setMessages(filteredMessages);
 
-      if (runMessage.type === "error") {
-        setError(runMessage.text);
-        // Attempt to retry
+        // Run code
+        const runMessage = runCode(code);
+        filteredMessages.push(runMessage);
+        setMessages(filteredMessages);
+
+        if (runMessage.type === "error") {
+          setError(runMessage.text);
+          // Attempt to retry
+        }
+      } catch (e) {
+        console.log(e);
+
+        const assistantMessage: LLMTextMessage = {
+          role: "assistant",
+          type: "text",
+          text: textWithCode,
+          model,
+          date: new Date().toISOString(),
+        };
+
+        filteredMessages.push(assistantMessage);
+        setMessages(filteredMessages);
       }
     } catch (error) {
       if (error instanceof Error) {

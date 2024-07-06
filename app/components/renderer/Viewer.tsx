@@ -8,10 +8,7 @@ import { ForwardedRef, forwardRef, useRef } from "react";
 type CameraProps = { objectToFit: Object3D<Object3DEventMap> | null; updateID: string };
 
 function Camera({ objectToFit, updateID }: CameraProps) {
-  const {
-    camera,
-    //size: { width, height },
-  } = useThree();
+  const { camera } = useThree();
   const controls = useRef<any>(null);
   const axis = useRef<AxesHelper>(null);
 
@@ -62,9 +59,6 @@ export const Viewer = forwardRef(
           camera={{ fov: 45, position: [100, 100, 100], far: 1000, near: 0.1 }}
           gl={{ preserveDrawingBuffer: true }}
           ref={canvasRef}
-          onCreated={({ gl }) => {
-            gl.domElement.id = "model-canvas";
-          }}
         >
           <Camera objectToFit={groupRef.current} updateID={updateID} />
           <group ref={groupRef} rotation={[-Math.PI / 2, 0, 0]}>
