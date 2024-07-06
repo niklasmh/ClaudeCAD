@@ -86,7 +86,7 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
     <div className={`chat group ${isUser ? "chat-end pl-12" : "chat-start pr-12"}`}>
       <div className="chat-header">{isUser ? "You" : modelNames[message.model]}</div>
       <div className="chat-bubble relative bg-transparent px-0">
-        {!edit && <img src={message.image} />}
+        {!edit && <img src={message.image} className="rounded-lg" />}
         {edit && (
           <SketchInput
             ref={drawingCanvasRef}

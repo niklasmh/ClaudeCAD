@@ -60,7 +60,7 @@ export const SketchInput = forwardRef(
           strokeColor={eraser ? "#ffffff" : strokeColor}
           strokeWidth={eraser ? 16 : 4}
           canvasColor={transparent ? "transparent" : "#ffffff"}
-          className="rounded-lg overflow-hidden !border-none"
+          className="!rounded-lg overflow-hidden !border-none"
           {...canvasProps}
         />
 
