@@ -6,6 +6,7 @@ import { useAppStore } from "@/app/store";
 import { LLMCodeMessage, LLMErrorMessage, LLMMessage, LLMModelMessage, LLMTextMessage } from "@/app/types/llm";
 import { KeyboardEvent, useRef } from "react";
 import { ChatMessage } from "./ChatMessage";
+import { CodeMessage } from "./CodeMessage";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
 import { extractImage, getImageFromCanvas } from "@/app/helpers/extractImage";
@@ -34,82 +35,69 @@ export const Chat = () => {
   const sendMessage = async ({
     textInput,
     imageInput,
+    codeInput,
     sendFromIndex = Infinity,
     overrideMessages = messages,
-  }: { textInput?: string; imageInput?: string; sendFromIndex?: number; overrideMessages?: LLMMessage[] } = {}) => {
+  }: {
+    textInput?: string;
+    imageInput?: string;
+    codeInput?: string;
+    sendFromIndex?: number;
+    overrideMessages?: LLMMessage[];
+  } = {}) => {
     setError(null);
     setTextInput("");
     setImageInput("");
     setSendingMessage(true);
 
+    const filteredMessages = [...overrideMessages].filter((_, index) => index <= sendFromIndex);
+
+    if (textInput) {
+      const userMessage: LLMMessage = {
+        role: "user",
+        type: "text",
+        text: textInput,
+        model,
+        date: new Date().toISOString(),
+      };
+      filteredMessages.push(userMessage);
+    }
+
+    if (overrideMessages.length === 0) {
+      const image = await getImageFromCanvas(drawingCanvasRef.current);
+      const userMessage: LLMMessage = {
+        role: "user",
+        type: "image",
+        image,
+        model,
+        date: new Date().toISOString(),
+      };
+      filteredMessages.push(userMessage);
+    }
+
+    if (imageInput) {
+      const userMessage: LLMMessage = {
+        role: "user",
+        type: "image",
+        image: imageInput,
+        model,
+        date: new Date().toISOString(),
+      };
+      filteredMessages.push(userMessage);
+    }
+
+    setMessages(filteredMessages);
+
     try {
-      const filteredMessages = [...overrideMessages].filter((_, index) => index <= sendFromIndex);
-
-      if (textInput) {
-        const userMessage: LLMMessage = {
-          role: "user",
-          type: "text",
-          text: textInput,
-          model,
-          date: new Date().toISOString(),
-        };
-        filteredMessages.push(userMessage);
-      }
-
-      if (overrideMessages.length === 0) {
-        const image = await getImageFromCanvas(drawingCanvasRef.current);
-        const userMessage: LLMMessage = {
-          role: "user",
-          type: "image",
-          image,
-          model,
-          date: new Date().toISOString(),
-        };
-        filteredMessages.push(userMessage);
-      }
-
-      if (imageInput) {
-        const userMessage: LLMMessage = {
-          role: "user",
-          type: "image",
-          image: imageInput,
-          model,
-          date: new Date().toISOString(),
-        };
-        filteredMessages.push(userMessage);
-      }
-
-      setMessages(filteredMessages);
-
-      // Generate code
-      const textWithCode = await llmConnector[model](
-        buildMessageHistory(filteredMessages, "generate-model"),
-        "text-and-image"
-      );
+      // Generate code if there is no code input
+      const textWithCode =
+        codeInput ??
+        (await llmConnector[model](buildMessageHistory(filteredMessages, "generate-model"), "text-and-image"));
 
       try {
-        const code = extractCodeFromMessage(textWithCode);
-
-        const assistantMessage: LLMCodeMessage = {
-          role: "assistant",
-          type: "code",
-          text: code,
-          model,
-          date: new Date().toISOString(),
-        };
-
-        filteredMessages.push(assistantMessage);
+        const messages = runCodeFromTextWithCode(textWithCode);
+        filteredMessages.push(...messages);
         setMessages(filteredMessages);
-
-        // Run code
-        const runMessage = runCode(code);
-        filteredMessages.push(runMessage);
-        setMessages(filteredMessages);
-
-        if (runMessage.type === "error") {
-          setError(runMessage.text);
-          // Attempt to retry
-        }
       } catch (e) {
         console.log(e);
 
@@ -124,17 +112,40 @@ export const Chat = () => {
         filteredMessages.push(assistantMessage);
         setMessages(filteredMessages);
       }
+
+      console.log("send", filteredMessages);
+
+      setTextInput("");
+      setImageInput("");
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
       }
       console.error(error);
-      if (textInput) setImageInput(textInput);
+      if (textInput) setTextInput(textInput);
+      if (imageInput) setImageInput(imageInput);
     }
 
-    setTextInput("");
-    setImageInput("");
     setSendingMessage(false);
+  };
+
+  const runCodeFromTextWithCode = (textWithCode: string) => {
+    const code = extractCodeFromMessage(textWithCode);
+    const messages = [];
+
+    const assistantMessage: LLMCodeMessage = {
+      role: "assistant",
+      type: "code",
+      text: code,
+      model,
+      date: new Date().toISOString(),
+    };
+    messages.push(assistantMessage);
+
+    const runMessage = runCode(code);
+    messages.push(runMessage);
+
+    return messages;
   };
 
   const runCode = (code: string): LLMModelMessage | LLMErrorMessage => {
@@ -258,6 +269,10 @@ export const Chat = () => {
     sendMessage({ sendFromIndex: index });
   };
 
+  const onRunCode = async (codeInput: string, index: number) => {
+    sendMessage({ codeInput, sendFromIndex: index - 1 });
+  };
+
   return (
     <div className="w-full flex flex-col justify-center">
       <div className="flex flex-col max-h-full overflow-y-auto overflow-x-hidden">
@@ -275,9 +290,13 @@ export const Chat = () => {
           }
           if (message.type === "code") {
             return (
-              <div key={index} className="p-4 bg-base-100 text-base-content rounded-md break-all">
-                {message.text}
-              </div>
+              <CodeMessage
+                key={index}
+                message={message}
+                onChange={(message) => updateMessage(message, index)}
+                onDelete={() => deleteMessage(index)}
+                onRun={(code) => onRunCode(code, index)}
+              />
             );
           }
           if (message.type === "image") {
