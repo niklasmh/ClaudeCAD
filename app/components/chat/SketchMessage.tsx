@@ -16,6 +16,7 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
   const [edit, setEdit] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
+  const [backgroundImage, setBackgroundImage] = useState<string | undefined>(message.image);
 
   const isUser = message.role === "user";
 
@@ -31,6 +32,7 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
 
   const handleClearEditButtonClick = () => {
     drawingCanvasRef.current?.clearCanvas();
+    setBackgroundImage(undefined);
   };
 
   const resizeTextarea = () => {
@@ -93,7 +95,7 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
             onClear={handleClearEditButtonClick}
             toggleEraser={drawingCanvasRef.current?.eraseMode}
             canvasProps={{
-              backgroundImage: message.image,
+              backgroundImage,
             }}
           />
         )}
