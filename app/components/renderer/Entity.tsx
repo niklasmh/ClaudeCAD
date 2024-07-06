@@ -10,7 +10,8 @@ export function Entity({ vertices, indices, normals, colors }: Geometry) {
         <bufferAttribute attach="attributes-color" array={colors} itemSize={4} count={colors.length / 4} />
         <bufferAttribute attach="index" array={indices} itemSize={1} count={indices.length} />
       </bufferGeometry>
-      <meshStandardMaterial attach="material" vertexColors side={DoubleSide} />
+      {/*<meshStandardMaterial attach="material" vertexColors side={DoubleSide} />*/}
+      <meshNormalMaterial attach="material" side={DoubleSide} />
     </mesh>
   );
 }
