@@ -1,4 +1,6 @@
-export type LLMMessage = LLMTextMessage | LLMImageMessage;
+import { Geometry } from "./geometry";
+
+export type LLMMessage = LLMTextMessage | LLMImageMessage | LLMCodeMessage | LLMModelMessage | LLMErrorMessage;
 
 export type LLMTextMessage = {
   type: "text";
@@ -13,6 +15,28 @@ export type LLMImageMessage = {
   role: Role;
   image: string;
   model: LLMModel;
+  date: string;
+};
+
+export type LLMCodeMessage = {
+  type: "code";
+  role: Role;
+  text: string;
+  model: LLMModel;
+  date: string;
+};
+
+export type LLMModelMessage = {
+  type: "model";
+  role: Role;
+  geometries: Geometry[];
+  date: string;
+};
+
+export type LLMErrorMessage = {
+  type: "error";
+  role: Role;
+  text: string;
   date: string;
 };
 

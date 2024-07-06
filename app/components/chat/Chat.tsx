@@ -1,14 +1,20 @@
 "use client";
 
+import * as jscad from "@jscad/modeling";
 import { llmConnector } from "@/app/helpers/llmConnector";
 import { useAppStore } from "@/app/store";
-import { LLMMessage, LLMTextMessage } from "@/app/types/llm";
+import { LLMErrorMessage, LLMMessage, LLMModelMessage } from "@/app/types/llm";
 import { KeyboardEvent, useRef } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
-import { getImageFromCanvas } from "@/app/helpers/extractImage";
+import { extractImage, getImageFromCanvas } from "@/app/helpers/extractImage";
 import { SketchMessage } from "./SketchMessage";
+import { buildMessageHistory } from "@/app/helpers/buildMessageHistory";
+import { extractCodeFromMessage } from "@/app/helpers/extractCodeFromMessage";
+import { geometryTransformer } from "@/app/helpers/geometryTransformer";
+import { extractError } from "@/app/helpers/extractError";
+import { ModelMessage } from "./ModelMessage";
 
 export const Chat = () => {
   const messages = useAppStore((state) => state.messages);
@@ -29,14 +35,15 @@ export const Chat = () => {
     textInput,
     imageInput,
     sendFromIndex = Infinity,
-  }: { textInput?: string; imageInput?: string; sendFromIndex?: number } = {}) => {
+    overrideMessages = messages,
+  }: { textInput?: string; imageInput?: string; sendFromIndex?: number; overrideMessages?: LLMMessage[] } = {}) => {
     setError(null);
     setTextInput("");
     setImageInput("");
     setSendingMessage(true);
 
     try {
-      const filteredMessages = [...messages].filter((_, index) => index <= sendFromIndex);
+      const filteredMessages = [...overrideMessages].filter((_, index) => index <= sendFromIndex);
 
       if (textInput) {
         const userMessage: LLMMessage = {
@@ -49,38 +56,58 @@ export const Chat = () => {
         filteredMessages.push(userMessage);
       }
 
-      if (imageInput) {
+      if (overrideMessages.length === 0) {
         const image = await getImageFromCanvas(drawingCanvasRef.current);
+        const userMessage: LLMMessage = {
+          role: "user",
+          type: "image",
+          image,
+          model,
+          date: new Date().toISOString(),
+        };
+        filteredMessages.push(userMessage);
+      }
 
-        if (image) {
-          const userMessage: LLMMessage = {
-            role: "user",
-            type: "image",
-            image,
-            model,
-            date: new Date().toISOString(),
-          };
-          filteredMessages.push(userMessage);
-        }
+      if (imageInput) {
+        const userMessage: LLMMessage = {
+          role: "user",
+          type: "image",
+          image: imageInput,
+          model,
+          date: new Date().toISOString(),
+        };
+        filteredMessages.push(userMessage);
       }
 
       setMessages(filteredMessages);
 
-      const text = await llmConnector[model](filteredMessages);
+      // Generate code
+      const textWithCode = await llmConnector[model](
+        buildMessageHistory(filteredMessages, "generate-model"),
+        "text-and-image"
+      );
+      const code = extractCodeFromMessage(textWithCode);
 
       const assistantMessage: LLMMessage = {
         role: "assistant",
-        type: "text",
-        text,
+        type: "code",
+        text: code,
         model,
         date: new Date().toISOString(),
       };
 
       filteredMessages.push(assistantMessage);
-
-      console.log(text);
-
       setMessages(filteredMessages);
+
+      // Run code
+      const runMessage = runCode(code);
+      filteredMessages.push(runMessage);
+      setMessages(filteredMessages);
+
+      if (runMessage.type === "error") {
+        setError(runMessage.text);
+        // Attempt to retry
+      }
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -94,10 +121,94 @@ export const Chat = () => {
     setSendingMessage(false);
   };
 
+  const runCode = (code: string): LLMModelMessage | LLMErrorMessage => {
+    try {
+      const entities = new Function("jscad", code)(jscad);
+      const geometries = geometryTransformer(entities);
+      return {
+        type: "model",
+        role: "assistant",
+        geometries,
+        date: new Date().toISOString(),
+      };
+    } catch (e: any) {
+      const details = extractError(e);
+      let error = `${details.type}: ${details.message}`;
+      if (details.lineNumber) {
+        error += ` at ${details.lineNumber}`;
+        if (details.columnNumber) {
+          error += `:${details.columnNumber}`;
+        }
+      }
+      console.log(e);
+      return {
+        type: "error",
+        role: "assistant",
+        text: error,
+        date: new Date().toISOString(),
+      };
+    }
+  };
+
+  const applyRequestToModel = async (sketch: string, modelImage: string, request: string, sendFromIndex: number) => {
+    let textInput = "";
+    if (modelImage) {
+      textInput = "This is an image of the rendered 3D model.";
+    }
+    if (sketch) {
+      textInput = "This is a sketch of what I want to make.";
+    }
+    if (modelImage && sketch) {
+      textInput = "This is an image of the rendered 3D model, with sketch applied.";
+    }
+    if (request) {
+      textInput += " I want you to apply this request on the 3D model:\n\n<request>\n" + request + "</request>";
+    }
+    const imageInput = (await mergeImages(modelImage, sketch)) || sketch || modelImage;
+    sendMessage({
+      textInput,
+      imageInput,
+      sendFromIndex,
+    });
+  };
+
+  const mergeImages = async (bgImage: string, fgImage: string): Promise<string | undefined> => {
+    const resultCanvas = document.createElement("canvas");
+    resultCanvas.width = 256;
+    resultCanvas.height = 256;
+    const context = resultCanvas?.getContext("2d");
+
+    if (!context) return;
+
+    await new Promise<void>((resolve) => {
+      const modelImageEl = new Image();
+      modelImageEl.src = bgImage;
+      modelImageEl.onload = () => {
+        context.drawImage(modelImageEl, 0, 0, 256, 256);
+        resolve();
+      };
+    });
+
+    await new Promise<void>((resolve) => {
+      const sketchEl = new Image();
+      sketchEl.src = fgImage;
+      sketchEl.onload = () => {
+        context.drawImage(sketchEl, 0, 0);
+        resolve();
+      };
+    });
+
+    const image = extractImage(resultCanvas);
+
+    resultCanvas.remove();
+
+    return image;
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      sendMessage({ textInput, imageInput: messages.length === 0 ? "init" : "" });
+      sendMessage({ textInput });
     }
   };
 
@@ -134,28 +245,51 @@ export const Chat = () => {
   return (
     <div className="w-full flex flex-col justify-center">
       <div className="flex flex-col max-h-full overflow-y-auto overflow-x-hidden">
-        {messages.map((message, index) =>
-          message.type === "text" ? (
-            <ChatMessage
-              key={index}
-              message={message}
-              onChange={(message) => updateMessage(message, index)}
-              onDelete={() => deleteMessage(index)}
-              onRerun={() => onRerun(index)}
-            />
-          ) : (
-            <SketchMessage
-              key={index}
-              message={message}
-              onChange={(message) => updateMessage(message, index)}
-              onDelete={() => deleteMessage(index)}
-              onRerun={() => onRerun(index)}
-            />
-          )
-        )}
+        {messages.map((message, index) => {
+          if (message.type === "text") {
+            return (
+              <ChatMessage
+                key={index}
+                message={message}
+                onChange={(message) => updateMessage(message, index)}
+                onDelete={() => deleteMessage(index)}
+                onRerun={() => onRerun(index)}
+              />
+            );
+          }
+          if (message.type === "code") {
+            return (
+              <div key={index} className="p-4 bg-base-100 text-base-content rounded-md break-all">
+                {message.text}
+              </div>
+            );
+          }
+          if (message.type === "image") {
+            return (
+              <SketchMessage
+                key={index}
+                message={message}
+                onChange={(message) => updateMessage(message, index)}
+                onDelete={() => deleteMessage(index)}
+                onRerun={() => onRerun(index)}
+              />
+            );
+          }
+          if (message.type === "model") {
+            return (
+              <ModelMessage
+                key={index}
+                message={message}
+                onSketch={(sketch, modelImage, request) => applyRequestToModel(sketch, modelImage, request, index)}
+                onDelete={() => deleteMessage(index)}
+              />
+            );
+          }
+          return <div key={index}>{message.type}</div>;
+        })}
       </div>
       <div
-        className="fixed bottom-0 left-0 right-0 bg-base-100 z-10 pt-4 pb-6"
+        className="fixed bottom-0 left-0 right-0 bg-base-100 z-10 pt-4 pb-6 px-4"
         style={{
           boxShadow: "0 0 20px 5px var(--fallback-b1,oklch(var(--b1)))",
         }}
@@ -187,11 +321,7 @@ export const Chat = () => {
               onKeyDown={handleKeyDown}
               onInput={handleInputChange}
             />
-            <button
-              className="btn btn-primary"
-              onClick={() => sendMessage({ textInput, imageInput: messages.length === 0 ? "init" : "" })}
-              disabled={sendingMessage}
-            >
+            <button className="btn btn-primary" onClick={() => sendMessage({ textInput })} disabled={sendingMessage}>
               Send {sendingMessage && <span className="loading loading-spinner loading-sm"></span>}
             </button>
           </div>

@@ -1,15 +1,16 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { LLMAnthropicModel, LLMMessage, LLMModel, LLMTextMessage } from "../types/llm";
+import { LLMMessage, LLMTextMessage } from "../types/llm";
 
 type LLMConnector = {
-  [model in LLMModel]: (messages: LLMMessage[]) => Promise<string>;
+  [model: string]: (messages: LLMMessage[], d: string) => Promise<string>;
 };
 
-const anthropicConnector = async (model: LLMAnthropicModel, messages: LLMMessage[]) => {
+const anthropicConnector = async (model: string, messages: LLMMessage[], dummyType: string | null = null) => {
   const response = (await fetch("/api/claude", {
     method: "POST",
     body: JSON.stringify({
       model: mapModel(model),
+      //dummyType,
       temperature: 0,
       system: getSystemMessage(messages),
       messages: groupMessagesByRole(messages.map(mapMessage)),
@@ -21,11 +22,11 @@ const anthropicConnector = async (model: LLMAnthropicModel, messages: LLMMessage
 };
 
 export const llmConnector: LLMConnector = {
-  "claude-1.2-instant": (messages) => anthropicConnector("claude-1.2-instant", messages),
-  "claude-3-opus": (messages) => anthropicConnector("claude-3-opus", messages),
-  "claude-3-sonnet": (messages) => anthropicConnector("claude-3-sonnet", messages),
-  "claude-3-haiku": (messages) => anthropicConnector("claude-3-haiku", messages),
-  "claude-3.5": (messages) => anthropicConnector("claude-3.5", messages),
+  "claude-1.2-instant": (messages, d) => anthropicConnector("claude-1.2-instant", messages, d),
+  "claude-3-opus": (messages, d) => anthropicConnector("claude-3-opus", messages, d),
+  "claude-3-sonnet": (messages, d) => anthropicConnector("claude-3-sonnet", messages, d),
+  "claude-3-haiku": (messages, d) => anthropicConnector("claude-3-haiku", messages, d),
+  "claude-3.5": (messages, d) => anthropicConnector("claude-3.5", messages, d),
 };
 
 const getSystemMessage = (messages: LLMMessage[]): string => {
@@ -55,6 +56,23 @@ const mapMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStream
         },
       ],
     };
+  } else if (message.type === "code") {
+    return {
+      role: "user",
+      content: [{ type: "text", text: "Here is the code used:\n\n```javascript\n" + message.text + "\n```" }],
+    };
+  } else if (message.type === "error") {
+    return {
+      role: "user",
+      content: [
+        { type: "text", text: "This is the error message from the code above:\n\n```\n" + message.text + "\n```" },
+      ],
+    };
+  } else if (message.type === "model") {
+    return {
+      role: "user",
+      content: [],
+    };
   } else {
     throw new Error("Only text and image messages are supported");
   }
@@ -83,7 +101,7 @@ const groupMessagesByRole = (
   return newMessages;
 };
 
-const mapModel = (model: LLMAnthropicModel): Anthropic.MessageCreateParamsNonStreaming["model"] => {
+const mapModel = (model: string): Anthropic.MessageCreateParamsNonStreaming["model"] => {
   switch (model) {
     case "claude-1.2-instant":
       return "claude-instant-1.2";
@@ -94,6 +112,7 @@ const mapModel = (model: LLMAnthropicModel): Anthropic.MessageCreateParamsNonStr
     case "claude-3-haiku":
       return "claude-3-haiku-20240307";
     case "claude-3.5":
+    default:
       return "claude-3-5-sonnet-20240620";
   }
 };

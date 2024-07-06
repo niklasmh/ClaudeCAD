@@ -3,7 +3,7 @@ import { OrbitControls } from "@react-three/drei";
 import { Entity } from "../renderer/Entity";
 import { Geometry } from "../../types/geometry";
 import { AxesHelper, Box3, Group, Object3D, Object3DEventMap, Sphere } from "three";
-import { useRef } from "react";
+import { ForwardedRef, forwardRef, useRef } from "react";
 
 type CameraProps = { objectToFit: Object3D<Object3DEventMap> | null; updateID: string };
 
@@ -38,31 +38,42 @@ function Camera({ objectToFit, updateID }: CameraProps) {
 }
 
 type Props = {
+  width?: number;
+  height?: number;
   geometries: Geometry[];
   updateID: string;
 };
 
-export function Viewer({ geometries, updateID }: Props) {
-  const uuid = Math.random().toString(36).substring(7);
-  const groupRef = useRef<Group>(null);
+export const Viewer = forwardRef(
+  ({ width = 256, height = 256, geometries, updateID }: Props, canvasRef: ForwardedRef<HTMLCanvasElement>) => {
+    const uuid = Math.random().toString(36).substring(7);
+    const groupRef = useRef<Group>(null);
 
-  return (
-    <div className="w-[256px] h-[256px] border border-primary rounded-lg">
-      <Canvas
-        orthographic
-        camera={{ fov: 45, position: [100, 100, 100], far: 1000, near: 0.1 }}
-        gl={{ preserveDrawingBuffer: true }}
-        onCreated={({ gl }) => {
-          gl.domElement.id = "model-canvas";
+    return (
+      <div
+        className="border border-primary rounded-lg"
+        style={{
+          width,
+          height,
         }}
       >
-        <Camera objectToFit={groupRef.current} updateID={updateID} />
-        <group ref={groupRef} rotation={[-Math.PI / 2, 0, 0]}>
-          {geometries.map((geometry, i) => (
-            <Entity key={uuid + "-" + i} {...geometry} />
-          ))}
-        </group>
-      </Canvas>
-    </div>
-  );
-}
+        <Canvas
+          orthographic
+          camera={{ fov: 45, position: [100, 100, 100], far: 1000, near: 0.1 }}
+          gl={{ preserveDrawingBuffer: true }}
+          ref={canvasRef}
+          onCreated={({ gl }) => {
+            gl.domElement.id = "model-canvas";
+          }}
+        >
+          <Camera objectToFit={groupRef.current} updateID={updateID} />
+          <group ref={groupRef} rotation={[-Math.PI / 2, 0, 0]}>
+            {geometries.map((geometry, i) => (
+              <Entity key={uuid + "-" + i} {...geometry} />
+            ))}
+          </group>
+        </Canvas>
+      </div>
+    );
+  }
+);
