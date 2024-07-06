@@ -25,7 +25,7 @@ export const SketchInput = forwardRef(
     };
 
     useEffect(() => {
-      toggleEraser?.(eraser);
+      if (transparent) toggleEraser?.(eraser);
     }, [eraser]);
 
     return (
@@ -34,7 +34,8 @@ export const SketchInput = forwardRef(
           ref={drawingCanvasRef}
           width={width + "px"}
           height={height + "px"}
-          strokeColor={strokeColor}
+          strokeColor={eraser ? "#ffffff" : strokeColor}
+          strokeWidth={eraser ? 16 : 4}
           canvasColor={transparent ? "transparent" : "#ffffff"}
           className="rounded-lg overflow-hidden !border-none"
           {...canvasProps}
