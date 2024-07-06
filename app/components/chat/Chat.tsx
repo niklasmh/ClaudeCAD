@@ -335,7 +335,7 @@ export const Chat = () => {
         })}
       </div>
       <div
-        className="fixed bottom-0 left-0 right-0 bg-base-100 z-10 pt-4 pb-6 px-4"
+        className="fixed bottom-0 left-0 right-0 bg-base-100 z-20 pt-4 pb-6 px-4"
         style={{
           boxShadow: "0 0 20px 5px var(--fallback-b1,oklch(var(--b1)))",
         }}
