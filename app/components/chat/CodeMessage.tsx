@@ -58,7 +58,7 @@ export const CodeMessage = ({ message, onChange, onRun, onDelete }: Props) => {
   return (
     <div className={`chat group ${isUser ? "chat-end pl-12" : "chat-start pr-12"}`}>
       <div className="chat-header">{modelNames[message.model]}</div>
-      <div className={`chat-bubble relative w-full ${isUser ? "bg-[#2a323c88]" : ""}`}>
+      <div className={`chat-bubble relative w-full p-3 ${isUser ? "bg-[#2a323c88]" : ""}`}>
         <CodeEditor readOnly={!edit} code={currentMessage.text} setCode={handleCodeChange} />
         {tools}
       </div>

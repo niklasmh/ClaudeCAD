@@ -88,7 +88,7 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
   return (
     <div className="chat group chat-start pr-8">
       <div className="chat-header">3D model</div>
-      <div className="chat-bubble relative">
+      <div className="chat-bubble relative p-3">
         <div className="relative mb-2">
           <Viewer ref={modelCanvasRef} geometries={message.geometries} updateID={""} width={256} height={256} />
           {edit && (

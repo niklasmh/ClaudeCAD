@@ -11,9 +11,11 @@ export function CodeEditor({ code, setCode, readOnly }: Props) {
     <Editor
       height="400px"
       theme="vs-dark"
+      className="rounded-lg overflow-hidden"
       options={{
         minimap: { enabled: false },
         readOnly,
+        scrollBeyondLastLine: false,
       }}
       defaultLanguage="javascript"
       value={code}
