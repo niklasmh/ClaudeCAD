@@ -36,15 +36,22 @@ const getSystemMessage = (messages: LLMMessage[]): string => {
     .join("\n");
 };
 
+const mapRole = (role: LLMMessage["role"]): Anthropic.MessageCreateParamsNonStreaming["messages"][0]["role"] => {
+  if (role === "user") {
+    return "user";
+  }
+  return "assistant";
+};
+
 const mapMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStreaming["messages"][0] => {
   if (message.type === "text") {
     return {
-      role: "user",
+      role: mapRole(message.role),
       content: [{ type: message.type, text: message.text }],
     };
   } else if (message.type === "image") {
     return {
-      role: "user",
+      role: mapRole(message.role),
       content: [
         {
           type: message.type,
@@ -58,19 +65,19 @@ const mapMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStream
     };
   } else if (message.type === "code") {
     return {
-      role: "user",
+      role: mapRole(message.role),
       content: [{ type: "text", text: "Here is the code used:\n\n```javascript\n" + message.text + "\n```" }],
     };
   } else if (message.type === "error") {
     return {
-      role: "user",
+      role: mapRole(message.role),
       content: [
         { type: "text", text: "This is the error message from the code above:\n\n```\n" + message.text + "\n```" },
       ],
     };
   } else if (message.type === "model") {
     return {
-      role: "user",
+      role: mapRole(message.role),
       content: [],
     };
   } else {

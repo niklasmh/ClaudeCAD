@@ -3,18 +3,25 @@ import { LLMImageMessage, LLMMessage, LLMTextMessage } from "../types/llm";
 
 export const buildMessageHistory = (messages: LLMMessage[], type: "generate-model" | "correct-model" | "fix-error") => {
   if (type === "generate-model") {
-    let newMessages = messages.slice(-10);
+    let newMessages = messages; //.slice(-10);
     console.log(newMessages);
     newMessages = modifyNLastMessagesOfType<LLMImageMessage>(
-      messages,
+      newMessages,
+      2,
+      (m) => m.type === "image" && m.role === "user",
+      (m) => ({ ...m, type: "text", text: "Here was an image of a sketched version of the model." }),
+      1
+    );
+    newMessages = modifyNLastMessagesOfType<LLMImageMessage>(
+      newMessages,
       1,
-      (m) => m.type === "image",
+      (m) => m.type === "image" && m.role === "assistant",
       (m) => ({ ...m, type: "text", text: "Here was an image of the 3D model." }),
       1
     );
-    const containsImage = newMessages.some((m) => m.type === "image");
+    const containsImage = newMessages.some((m) => m.type === "image" && m.role === "user");
     newMessages = modifyNLastMessagesOfType<LLMTextMessage>(
-      messages,
+      newMessages,
       1,
       (m) => m.type === "text",
       (m) => ({ ...m, text: containsImage ? generateCodeWithImage(m.text) : generateCode(m.text) })
