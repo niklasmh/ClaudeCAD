@@ -1,5 +1,5 @@
 import { LLMMessage, LLMTextMessage, modelNames } from "@/app/types/llm";
-import { Pencil, RefreshCw, Save, Trash } from "lucide-react";
+import { Eye, Pencil, RefreshCw, Save, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -24,6 +24,10 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
   const handleSaveEditButtonClick = () => {
     setEdit(false);
     onChange(currentMessage);
+  };
+
+  const handleShow = () => {
+    onChange({ ...currentMessage, hidden: false });
   };
 
   const resizeTextarea = () => {
@@ -57,21 +61,36 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
       }`}
     >
       {!edit && (
-        <div onClick={handleOpenEditButtonClick} className="hover:opacity-80 cursor-pointer">
+        <div onClick={handleOpenEditButtonClick} className="hover:opacity-80 cursor-pointer" title="Edit message">
           <Pencil size={16} />
         </div>
       )}
       {edit && (
-        <div onClick={handleSaveEditButtonClick} className="hover:opacity-80 cursor-pointer">
+        <div onClick={handleSaveEditButtonClick} className="hover:opacity-80 cursor-pointer" title="Save message">
           <Save size={16} />
         </div>
       )}
       {isUser && (
-        <div onClick={onRerun} className="hover:opacity-80 cursor-pointer">
+        <div onClick={onRerun} className="hover:opacity-80 cursor-pointer" title="Rerun message">
           <RefreshCw size={16} />
         </div>
       )}
-      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer">
+      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer" title="Remove message">
+        <Trash size={16} />
+      </div>
+    </div>
+  );
+
+  const hidden = (
+    <div
+      className={`absolute group-hover:visible invisible top-0 bottom-0 flex flex-row items-center mx-3 gap-2 opacity-30 ${
+        isUser ? "right-full flex-row-reverse" : "left-full"
+      }`}
+    >
+      <div onClick={handleShow} className="hover:opacity-80 cursor-pointer" title="Show message">
+        <Eye size={16} />
+      </div>
+      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer" title="Remove message">
         <Trash size={16} />
       </div>
     </div>
@@ -79,10 +98,10 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
 
   return (
     <div className={`chat group ${isUser ? "chat-end pl-12" : "chat-start pr-12"}`}>
-      <div className="chat-header">{modelNames[message.model]}</div>
+      <div className="chat-header">{isUser ? "You" : modelNames[message.model]}</div>
       <div className={`chat-bubble relative ${isUser ? "bg-[#2a323c88]" : ""} ${edit ? "w-full p-0" : ""}`}>
-        {!edit && <ReactMarkdown className="prose">{message.text}</ReactMarkdown>}
-        {edit && (
+        {!message.hidden && !edit && <ReactMarkdown className="prose">{message.text}</ReactMarkdown>}
+        {!message.hidden && edit && (
           <textarea
             className="w-full flex-1 h-[48px] textarea bg-transparent resize-none overflow-hidden border-none !outline-none"
             value={currentMessage.text}
@@ -96,7 +115,12 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
             onInput={handleInputChange}
           />
         )}
-        {tools}
+        {message.hidden && (
+          <div className="text-gray-400">
+            <i>{message.hiddenText || "This message is hidden"}</i>
+          </div>
+        )}
+        {message.hidden ? hidden : tools}
       </div>
       <div className="chat-footer opacity-50">Sent {new Date(message.date).toLocaleString()}</div>
     </div>

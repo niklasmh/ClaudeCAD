@@ -97,6 +97,8 @@ export const Chat = () => {
         text: "Here are four different views of the model with normal maps applied. Normal map color representation: The purple color is in the front, green color is on the top, and red color is on the right side. The image on top left is the front view, top right is the right view, bottom left is the top view, and bottom right is the same as the main image, with sketches, just with normal mapping as well. Use the normal mappings to understand the model and the orientation of the model that needs improvement.",
         model,
         date: new Date().toISOString(),
+        hidden: true,
+        hiddenText: "The next image is a normal map representation of the model.",
       };
       filteredMessages.push(normalMappingImagesExplanationMessage);
       const normalMappingImagesMessage: LLMMessage = {
@@ -105,6 +107,9 @@ export const Chat = () => {
         image: modelNormalMapImages,
         model,
         date: new Date().toISOString(),
+        editable: false,
+        hidden: true,
+        hiddenText: "Normal map representation of the model.",
       };
       filteredMessages.push(normalMappingImagesMessage);
     }
@@ -162,6 +167,7 @@ export const Chat = () => {
       text: code,
       model,
       date: new Date().toISOString(),
+      hidden: true,
     };
     messages.push(assistantMessage);
 

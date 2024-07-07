@@ -1,5 +1,5 @@
 import { LLMImageMessage, modelNames } from "@/app/types/llm";
-import { Pencil, RefreshCw, Save, Trash } from "lucide-react";
+import { Eye, Pencil, RefreshCw, Save, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
@@ -35,6 +35,10 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
     setBackgroundImage(undefined);
   };
 
+  const handleShow = () => {
+    onChange({ ...message, hidden: false });
+  };
+
   const resizeTextarea = () => {
     const el = textareaRef.current;
 
@@ -61,7 +65,7 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
         isUser ? "right-full flex-row-reverse" : "left-full"
       }`}
     >
-      {!edit && (
+      {message.editable !== false && !edit && (
         <div onClick={handleOpenEditButtonClick} className="hover:opacity-80 cursor-pointer">
           <Pencil size={16} />
         </div>
@@ -82,12 +86,27 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
     </div>
   );
 
+  const hidden = (
+    <div
+      className={`absolute group-hover:visible invisible top-0 bottom-0 flex flex-row items-center mx-3 gap-2 opacity-30 ${
+        isUser ? "right-full flex-row-reverse" : "left-full"
+      }`}
+    >
+      <div onClick={handleShow} className="hover:opacity-80 cursor-pointer" title="Show message">
+        <Eye size={16} />
+      </div>
+      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer" title="Remove message">
+        <Trash size={16} />
+      </div>
+    </div>
+  );
+
   return (
     <div className={`chat group ${isUser ? "chat-end pl-12" : "chat-start pr-12"}`}>
       <div className="chat-header">{isUser ? "You" : modelNames[message.model]}</div>
       <div className="chat-bubble relative bg-transparent px-0">
-        {!edit && <img src={message.image} className="rounded-lg" />}
-        {edit && (
+        {!message.hidden && !edit && <img src={message.image} className="rounded-lg" />}
+        {!message.hidden && edit && (
           <SketchInput
             ref={drawingCanvasRef}
             height={256}
@@ -99,7 +118,12 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
             }}
           />
         )}
-        {tools}
+        {message.hidden && (
+          <div className="text-gray-400">
+            <i>{message.hiddenText || "This image is hidden"}</i>
+          </div>
+        )}
+        {message.hidden ? hidden : tools}
       </div>
       <div className="chat-footer opacity-50">Sent {new Date(message.date).toLocaleString()}</div>
     </div>

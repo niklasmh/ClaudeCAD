@@ -2,43 +2,41 @@ import { Geometry } from "./geometry";
 
 export type LLMMessage = LLMTextMessage | LLMImageMessage | LLMCodeMessage | LLMModelMessage | LLMErrorMessage;
 
+export type BaseMessage = {
+  role: Role;
+  date: string;
+  hidden?: boolean;
+  hiddenText?: string;
+};
+
 export type LLMTextMessage = {
   type: "text";
-  role: Role;
   text: string;
   model: LLMModel;
-  date: string;
-};
+} & BaseMessage;
 
 export type LLMImageMessage = {
   type: "image";
-  role: Role;
   image: string;
   model: LLMModel;
-  date: string;
-};
+  editable?: boolean;
+} & BaseMessage;
 
 export type LLMCodeMessage = {
   type: "code";
-  role: Role;
   text: string;
   model: LLMModel;
-  date: string;
-};
+} & BaseMessage;
 
 export type LLMModelMessage = {
   type: "model";
-  role: Role;
   geometries: Geometry[];
-  date: string;
-};
+} & BaseMessage;
 
 export type LLMErrorMessage = {
   type: "error";
-  role: Role;
   text: string;
-  date: string;
-};
+} & BaseMessage;
 
 export type Role = "user" | "assistant" | "system";
 
