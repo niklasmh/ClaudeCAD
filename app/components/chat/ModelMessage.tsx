@@ -207,17 +207,15 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
               setCameraPositionZ(z);
             }}
           />
-          {edit && (
-            <SketchInput
-              ref={drawingCanvasRef}
-              height={256}
-              width={256}
-              className="-mt-[256px] relative z-10"
-              onClear={handleClearEditButtonClick}
-              toggleEraser={drawingCanvasRef.current?.eraseMode}
-              transparent
-            />
-          )}
+          <SketchInput
+            ref={drawingCanvasRef}
+            height={256}
+            width={256}
+            className={`-mt-[256px] relative ${edit ? "" : "pointer-events-none"}`}
+            onClear={handleClearEditButtonClick}
+            toggleEraser={drawingCanvasRef.current?.eraseMode}
+            transparent
+          />
         </div>
         {controls}
         {tools}
