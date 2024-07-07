@@ -9,7 +9,7 @@ import { ChatMessage } from "./ChatMessage";
 import { CodeMessage } from "./CodeMessage";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
-import { extractImage, getImageFromCanvas } from "@/app/helpers/extractImage";
+import { getImageFromCanvas } from "@/app/helpers/extractImage";
 import { SketchMessage } from "./SketchMessage";
 import { buildMessageHistory } from "@/app/helpers/buildMessageHistory";
 import { extractCodeFromMessage } from "@/app/helpers/extractCodeFromMessage";
@@ -17,6 +17,7 @@ import { geometryTransformer } from "@/app/helpers/geometryTransformer";
 import { extractError } from "@/app/helpers/extractError";
 import { ModelMessage } from "./ModelMessage";
 import { ErrorMessage } from "./ErrorMessage";
+import { mergeImages } from "@/app/helpers/mergeImages";
 
 export const Chat = () => {
   const messages = useAppStore((state) => state.messages);
@@ -36,12 +37,14 @@ export const Chat = () => {
   const sendMessage = async ({
     textInput,
     imageInput,
+    modelNormalMapImages,
     codeInput,
     sendFromIndex = Infinity,
     overrideMessages = messages,
   }: {
     textInput?: string;
     imageInput?: string;
+    modelNormalMapImages?: string;
     codeInput?: string;
     sendFromIndex?: number;
     overrideMessages?: LLMMessage[];
@@ -85,6 +88,25 @@ export const Chat = () => {
         date: new Date().toISOString(),
       };
       filteredMessages.push(userMessage);
+    }
+
+    if (modelNormalMapImages) {
+      const normalMappingImagesExplanationMessage: LLMMessage = {
+        role: "user",
+        type: "text",
+        text: "Here are four different views of the model with normal maps applied. Normal map color representation: The purple color is in the front, green color is on the top, and red color is on the right side. The image on top left is the front view, top right is the right view, bottom left is the top view, and bottom right is the same as the main image, with sketches, just with normal mapping as well. Use the normal mappings to understand the model and the orientation of the model that needs improvement.",
+        model,
+        date: new Date().toISOString(),
+      };
+      filteredMessages.push(normalMappingImagesExplanationMessage);
+      const normalMappingImagesMessage: LLMMessage = {
+        role: "user",
+        type: "image",
+        image: modelNormalMapImages,
+        model,
+        date: new Date().toISOString(),
+      };
+      filteredMessages.push(normalMappingImagesMessage);
     }
 
     setMessages(filteredMessages);
@@ -178,7 +200,13 @@ export const Chat = () => {
     }
   };
 
-  const applyRequestToModel = async (sketch: string, modelImage: string, request: string, sendFromIndex: number) => {
+  const applyRequestToModel = async (
+    sketch: string,
+    modelImage: string,
+    modelNormalMapImages: string,
+    request: string,
+    sendFromIndex: number
+  ) => {
     let textInput = "";
     if (modelImage) {
       textInput = "This is an image of the rendered 3D model.";
@@ -192,45 +220,24 @@ export const Chat = () => {
     if (request) {
       textInput += " I want you to apply this request on the 3D model:\n\n<request>\n" + request + "</request>";
     }
-    const imageInput = (await mergeImages(modelImage, sketch)) || sketch || modelImage;
+    const imageInput = (await mergeImages([modelImage, sketch])) || sketch || modelImage;
+    const modelNormalMapImagesWithSketch =
+      (await mergeImages([modelNormalMapImages, sketch], {
+        positions: [
+          { x: 0, y: 0 },
+          { x: 128, y: 128 },
+        ],
+        sizes: [
+          { width: 256, height: 256 },
+          { width: 128, height: 128 },
+        ],
+      })) || modelNormalMapImages;
     sendMessage({
       textInput,
       imageInput,
+      modelNormalMapImages: modelNormalMapImagesWithSketch,
       sendFromIndex,
     });
-  };
-
-  const mergeImages = async (bgImage: string, fgImage: string): Promise<string | undefined> => {
-    const resultCanvas = document.createElement("canvas");
-    resultCanvas.width = 256;
-    resultCanvas.height = 256;
-    const context = resultCanvas?.getContext("2d");
-
-    if (!context) return;
-
-    await new Promise<void>((resolve) => {
-      const modelImageEl = new Image();
-      modelImageEl.src = bgImage;
-      modelImageEl.onload = () => {
-        context.drawImage(modelImageEl, 0, 0, 256, 256);
-        resolve();
-      };
-    });
-
-    await new Promise<void>((resolve) => {
-      const sketchEl = new Image();
-      sketchEl.src = fgImage;
-      sketchEl.onload = () => {
-        context.drawImage(sketchEl, 0, 0);
-        resolve();
-      };
-    });
-
-    const image = extractImage(resultCanvas);
-
-    resultCanvas.remove();
-
-    return image;
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -316,7 +323,9 @@ export const Chat = () => {
               <ModelMessage
                 key={index}
                 message={message}
-                onSketch={(sketch, modelImage, request) => applyRequestToModel(sketch, modelImage, request, index)}
+                onSketch={(sketch, modelImage, modelNormalMapImages, request) =>
+                  applyRequestToModel(sketch, modelImage, modelNormalMapImages, request, index)
+                }
                 onDelete={() => deleteMessage(index)}
               />
             );

@@ -10,7 +10,7 @@ const anthropicConnector = async (model: string, messages: LLMMessage[], dummyTy
     method: "POST",
     body: JSON.stringify({
       model: mapModel(model),
-      //dummyType,
+      dummyType,
       temperature: 0,
       system: getSystemMessage(messages),
       messages: groupMessagesByRole(messages.map(mapMessage)),

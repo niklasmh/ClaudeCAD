@@ -2,12 +2,12 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Entity } from "../renderer/Entity";
 import { Geometry } from "../../types/geometry";
-import { AxesHelper, Box3, Group, Object3D, Object3DEventMap, Sphere } from "three";
+import { AxesHelper, Box3, Group, Object3D, Object3DEventMap, Sphere, Vector3 } from "three";
 import { ForwardedRef, forwardRef, useRef } from "react";
 
-type CameraProps = { objectToFit: Object3D<Object3DEventMap> | null; updateID: string };
+type CameraProps = { objectToFit: Object3D<Object3DEventMap> | null; cameraPosition?: Vector3; zoom: number };
 
-function Camera({ objectToFit, updateID }: CameraProps) {
+function Camera({ objectToFit, cameraPosition, zoom }: CameraProps) {
   const { camera } = useThree();
   const controls = useRef<any>(null);
   const axis = useRef<AxesHelper>(null);
@@ -16,10 +16,18 @@ function Camera({ objectToFit, updateID }: CameraProps) {
     const aabb = new Box3().setFromObject(objectToFit);
     const sphere = aabb.getBoundingSphere(new Sphere());
     const { center, radius } = sphere;
-    camera.zoom = 120 / radius;
+    camera.zoom = (120 / radius) * zoom;
     camera.near = 0.1 * radius;
     camera.far = 1000 * radius;
-    camera.position.set(center.x + radius, center.y + radius, center.z + radius);
+    if (cameraPosition) {
+      camera.position.set(
+        center.x + cameraPosition.x * radius,
+        center.y + cameraPosition.y * radius,
+        center.z + cameraPosition.z * radius
+      );
+    } else {
+      camera.position.set(center.x + radius, center.y + radius, center.z + radius);
+    }
     controls.current.target.set(center.x, center.y, center.z);
     camera.updateProjectionMatrix();
   }
@@ -35,20 +43,25 @@ function Camera({ objectToFit, updateID }: CameraProps) {
 }
 
 type Props = {
+  className?: string;
+  applyNormalMap?: boolean;
+  cameraPosition?: Vector3;
   width?: number;
   height?: number;
   geometries: Geometry[];
-  updateID: string;
 };
 
 export const Viewer = forwardRef(
-  ({ width = 256, height = 256, geometries, updateID }: Props, canvasRef: ForwardedRef<HTMLCanvasElement>) => {
-    const uuid = Math.random().toString(36).substring(7);
+  (
+    { className = "", width = 256, height = 256, applyNormalMap = false, geometries, cameraPosition }: Props,
+    canvasRef: ForwardedRef<HTMLCanvasElement>
+  ) => {
     const groupRef = useRef<Group>(null);
+    const zoom = Math.min(width, height) / 256;
 
     return (
       <div
-        className="border border-primary rounded-lg"
+        className={"border border-primary rounded-lg " + className}
         style={{
           width,
           height,
@@ -60,10 +73,10 @@ export const Viewer = forwardRef(
           gl={{ preserveDrawingBuffer: true }}
           ref={canvasRef}
         >
-          <Camera objectToFit={groupRef.current} updateID={updateID} />
+          <Camera objectToFit={groupRef.current} cameraPosition={cameraPosition} zoom={zoom} />
           <group ref={groupRef} rotation={[-Math.PI / 2, 0, 0]}>
             {geometries.map((geometry, i) => (
-              <Entity key={uuid + "-" + i} geometry={geometry} />
+              <Entity key={i} applyNormalMap={applyNormalMap} geometry={geometry} />
             ))}
           </group>
         </Canvas>
