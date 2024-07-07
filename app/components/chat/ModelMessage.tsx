@@ -155,7 +155,7 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
       <textarea
         value={request}
         onChange={(e) => setRequest(e.target.value)}
-        className="textarea textarea-primary min-h-[46px] h-[46px]"
+        className="textarea textarea-primary min-h-[72px] h-[72px]"
         placeholder="E.g. Add hole through the top of the marked area."
       />
       <div className="flex flex-row flex-wrap gap-2 items-center">
