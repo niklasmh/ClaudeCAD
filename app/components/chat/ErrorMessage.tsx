@@ -29,12 +29,10 @@ export const ErrorMessage = ({ message, onFix, onDelete }: Props) => {
   return (
     <div className={`chat group ${isUser ? "chat-end pl-12" : "chat-start pr-12"}`}>
       <div className="chat-header">An error message</div>
-      <div className={`chat-bubble relative w-full p-3 ${isUser ? "bg-[#2a323c88]" : ""}`}>
-        <div className="prose">
-          <pre>
-            <code className="w-full whitespace-pre-wrap text-red-400">{message.text}</code>
-          </pre>
-        </div>
+      <div className={`chat-bubble relative w-full p-3 prose ${isUser ? "bg-[#2a323c88]" : ""}`}>
+        <pre className="m-0">
+          <code className="w-full whitespace-pre-wrap text-red-400">{message.text}</code>
+        </pre>
         {tools}
       </div>
       <div className="chat-footer opacity-50">Sent {new Date(message.date).toLocaleString()}</div>
