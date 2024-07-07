@@ -63,7 +63,7 @@ export const Viewer = forwardRef(
           <Camera objectToFit={groupRef.current} updateID={updateID} />
           <group ref={groupRef} rotation={[-Math.PI / 2, 0, 0]}>
             {geometries.map((geometry, i) => (
-              <Entity key={uuid + "-" + i} {...geometry} />
+              <Entity key={uuid + "-" + i} geometry={geometry} />
             ))}
           </group>
         </Canvas>
