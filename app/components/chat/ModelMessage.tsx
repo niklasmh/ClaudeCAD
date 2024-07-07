@@ -109,9 +109,11 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
         className="textarea textarea-primary min-h-[46px] h-[46px]"
         placeholder="E.g. Add hole through the top of the marked area."
       />
-      <button onClick={handleSaveEditButtonClick} className="btn btn-sm btn-success">
-        Request change <Send size={16} />
-      </button>
+      <div className="flex flex-row gap-2 items-center">
+        <button onClick={handleSaveEditButtonClick} className="btn btn-sm btn-success">
+          Request change <Send size={16} />
+        </button>
+      </div>
     </div>
   );
 

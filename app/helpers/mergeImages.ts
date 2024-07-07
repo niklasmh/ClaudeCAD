@@ -25,6 +25,8 @@ export const mergeImages = async (
     const position = positions?.[i] ?? { x: 0, y: 0 };
     const size = sizes?.[i] ?? outputSize;
 
+    if (!image) continue;
+
     await new Promise<void>((resolve) => {
       const imageEl = new Image();
       imageEl.src = image;

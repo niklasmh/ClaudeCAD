@@ -238,6 +238,7 @@ export const Chat = () => {
           { width: 128, height: 128 },
         ],
       })) || modelNormalMapImages;
+
     sendMessage({
       textInput,
       imageInput,
