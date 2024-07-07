@@ -30,6 +30,7 @@ export const CodeMessage = ({ message, onChange, onRun, onDelete }: Props) => {
   };
 
   const handleShow = () => {
+    setCurrentMessage({ ...currentMessage, hidden: false });
     onChange({ ...currentMessage, hidden: false });
   };
 
@@ -76,7 +77,7 @@ export const CodeMessage = ({ message, onChange, onRun, onDelete }: Props) => {
   return (
     <div className={`chat group ${isUser ? "chat-end pl-12" : "chat-start pr-12"}`}>
       <div className="chat-header">{modelNames[message.model]}</div>
-      <div className={`chat-bubble relative w-full p-3 ${isUser ? "bg-[#2a323c88]" : ""}`}>
+      <div className={`chat-bubble relative ${isUser ? "bg-[#2a323c88]" : ""} ${message.hidden ? "" : "w-full p-3"}`}>
         {!message.hidden && <CodeEditor readOnly={!edit} code={currentMessage.text} setCode={handleCodeChange} />}
         {message.hidden && (
           <div className="text-gray-400">

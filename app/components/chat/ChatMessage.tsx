@@ -27,6 +27,7 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
   };
 
   const handleShow = () => {
+    setCurrentMessage({ ...currentMessage, hidden: false });
     onChange({ ...currentMessage, hidden: false });
   };
 
