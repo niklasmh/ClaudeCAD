@@ -183,7 +183,7 @@ export const Chat = () => {
       const geometries = geometryTransformer(originalGeometries);
       return {
         type: "model",
-        role: "assistant",
+        role: "user",
         geometries,
         originalGeometries,
         date: new Date().toISOString(),
@@ -200,7 +200,7 @@ export const Chat = () => {
       console.log(e);
       return {
         type: "error",
-        role: "assistant",
+        role: "user",
         text: error,
         date: new Date().toISOString(),
       };
@@ -360,11 +360,12 @@ export const Chat = () => {
         <div className="flex flex-col gap-4 max-w-[800px] mx-auto">
           {messages.length === 0 && (
             <div className="text-center">
-              <p className="text-lg">Draw or type what you want to make.</p>
+              <p className="text-lg">Draw and/or describe what you want to make.</p>
               <p className="text-xs text-[#666]">Quick tip: Start with simple geometry in 2D.</p>
               <div className="flex flex-row justify-center mt-4">
                 <SketchInput
                   ref={drawingCanvasRef}
+                  showControls
                   width={420}
                   height={420}
                   onClear={() => {
