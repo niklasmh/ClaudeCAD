@@ -1,6 +1,6 @@
 import * as io from "@jscad/io";
 import { LLMModelMessage } from "@/app/types/llm";
-import { Download, Pen, Pencil, Rotate3D, Send, Trash } from "lucide-react";
+import { Download, Pen, Pencil, Rotate3D, Send, ThumbsDown, ThumbsUp, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
@@ -38,7 +38,7 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
     setEdit((edit) => !edit);
   };
 
-  const handleSaveEditButtonClick = async () => {
+  const handleSaveEditButtonClick = async (customRequest: string = "") => {
     setEdit(false);
 
     const sketchImage = await getImageFromCanvas(drawingCanvasRef.current);
@@ -68,7 +68,15 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
         }
       )) ?? "";
 
-    onSketch(sketchImage, modelImage, modelNormalMapImages, request);
+    onSketch(sketchImage, modelImage, modelNormalMapImages, customRequest || request);
+  };
+
+  const handleNotCorrectButtonClick = () => {
+    handleSaveEditButtonClick("Not correct. Make it again.");
+  };
+
+  const handleCloseToGoodButtonClick = () => {
+    handleSaveEditButtonClick("Almost there! Make it again.");
   };
 
   const handleClearEditButtonClick = () => {
@@ -111,7 +119,7 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
         </div>
       )}
       {edit && (
-        <div onClick={handleSaveEditButtonClick} className="hover:opacity-80 cursor-pointer" title="Rotate model">
+        <div onClick={handleToggleEditButtonClick} className="hover:opacity-80 cursor-pointer" title="Rotate model">
           <Rotate3D size={16} />
         </div>
       )}
@@ -123,6 +131,16 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
 
   const controls = (
     <div className="flex flex-col gap-2">
+      {!edit && (
+        <div className="flex flex-row flex-wrap gap-2 items-center">
+          <button onClick={handleNotCorrectButtonClick} className="btn btn-sm btn-error">
+            Not correct <ThumbsDown size={16} />
+          </button>
+          <button onClick={handleCloseToGoodButtonClick} className="btn btn-sm btn-success">
+            Close to good <ThumbsUp size={16} />
+          </button>
+        </div>
+      )}
       <label className="flex flex-row gap-2 items-center cursor-pointer">
         <span className="label-text flex flex-row gap-2 items-center">
           <Rotate3D size={16} />
@@ -141,7 +159,7 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
         placeholder="E.g. Add hole through the top of the marked area."
       />
       <div className="flex flex-row flex-wrap gap-2 items-center">
-        <button onClick={handleSaveEditButtonClick} className="btn btn-sm btn-success">
+        <button onClick={() => handleSaveEditButtonClick()} className="btn btn-sm btn-success">
           Request change <Send size={16} />
         </button>
         <button onClick={handleDownloadButtonClick} className="btn btn-sm btn-primary">
@@ -211,6 +229,7 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
             ref={drawingCanvasRef}
             height={256}
             width={256}
+            showControls={edit}
             className={`-mt-[256px] relative ${edit ? "" : "pointer-events-none"}`}
             onClear={handleClearEditButtonClick}
             toggleEraser={drawingCanvasRef.current?.eraseMode}

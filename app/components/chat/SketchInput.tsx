@@ -9,6 +9,7 @@ type Props = {
   height?: number;
   onClear?: () => void;
   toggleEraser?: (enable: boolean) => void;
+  showControls?: boolean;
   canvasProps?: React.ComponentProps<typeof ReactSketchCanvas>;
 };
 
@@ -37,7 +38,7 @@ const colors = [
 
 export const SketchInput = forwardRef(
   (
-    { className = "", transparent, width = 256, height = 256, onClear, toggleEraser, canvasProps }: Props,
+    { className = "", transparent, width = 256, height = 256, onClear, toggleEraser, showControls, canvasProps }: Props,
     drawingCanvasRef: ForwardedRef<ReactSketchCanvasRef>
   ) => {
     const [strokeColor, setStrokeColor] = useState("#000000");
@@ -64,37 +65,39 @@ export const SketchInput = forwardRef(
           {...canvasProps}
         />
 
-        <div className="flex flex-row gap-2">
-          {colors.map(({ name, value, className }) => (
+        {showControls && (
+          <div className="flex flex-row gap-2">
+            {colors.map(({ name, value, className }) => (
+              <button
+                key={value}
+                onClick={() => {
+                  setStrokeColor(value);
+                  setEraser(false);
+                }}
+                className={`btn btn-sm aspect-square ${className} p-0`}
+                title={name}
+              >
+                {!eraser && strokeColor === value ? <Check /> : ""}
+              </button>
+            ))}
+            <div className="divider divider-horizontal m-0" />
             <button
-              key={value}
+              onClick={handleToggleEraser}
+              className={`btn btn-primary btn-sm aspect-square p-0 ${eraser ? "" : "btn-ghost"}`}
+            >
+              <Eraser size={20} />
+            </button>
+            <button
               onClick={() => {
-                setStrokeColor(value);
+                onClear?.();
                 setEraser(false);
               }}
-              className={`btn btn-sm aspect-square ${className} p-0`}
-              title={name}
+              className="btn btn-sm aspect-square p-0 btn-ghost"
             >
-              {!eraser && strokeColor === value ? <Check /> : ""}
+              <Trash size={20} />
             </button>
-          ))}
-          <div className="divider divider-horizontal m-0" />
-          <button
-            onClick={handleToggleEraser}
-            className={`btn btn-primary btn-sm aspect-square p-0 ${eraser ? "" : "btn-ghost"}`}
-          >
-            <Eraser size={20} />
-          </button>
-          <button
-            onClick={() => {
-              onClear?.();
-              setEraser(false);
-            }}
-            className="btn btn-sm aspect-square p-0 btn-ghost"
-          >
-            <Trash size={20} />
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     );
   }
