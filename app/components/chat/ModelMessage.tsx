@@ -18,6 +18,10 @@ type Props = {
 
 export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
   const [edit, setEdit] = useState<boolean>(false);
+  const [cameraPosition, setCameraPosition] = useState<Vector3>(new Vector3(1, 1, 1));
+  const [cameraPositionX, setCameraPositionX] = useState<number>(1);
+  const [cameraPositionY, setCameraPositionY] = useState<number>(1);
+  const [cameraPositionZ, setCameraPositionZ] = useState<number>(1);
   const modelCanvasRef = useRef<HTMLCanvasElement>(null);
   const modelNormalMapCanvasRef = useRef<HTMLCanvasElement>(null);
   const modelNormalMapTopCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -183,14 +187,26 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
             <Viewer
               ref={modelNormalMapCanvasRef}
               applyNormalMap
-              cameraPosition={new Vector3(1, 1, 1)}
+              cameraPositionX={cameraPositionX}
+              cameraPositionY={cameraPositionY}
+              cameraPositionZ={cameraPositionZ}
               geometries={message.geometries}
               width={128}
               height={128}
               className="border-none"
             />
           </div>
-          <Viewer ref={modelCanvasRef} geometries={message.geometries} width={256} height={256} />
+          <Viewer
+            ref={modelCanvasRef}
+            geometries={message.geometries}
+            width={256}
+            height={256}
+            onCameraPositionChange={({ x, y, z }) => {
+              setCameraPositionX(x);
+              setCameraPositionY(y);
+              setCameraPositionZ(z);
+            }}
+          />
           {edit && (
             <SketchInput
               ref={drawingCanvasRef}

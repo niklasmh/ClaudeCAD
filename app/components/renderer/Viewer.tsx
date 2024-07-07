@@ -9,6 +9,10 @@ type Props = {
   className?: string;
   applyNormalMap?: boolean;
   cameraPosition?: Vector3;
+  cameraPositionX?: number;
+  cameraPositionY?: number;
+  cameraPositionZ?: number;
+  onCameraPositionChange?: (position: Vector3) => void;
   width?: number;
   height?: number;
   geometries: Geometry[];
@@ -16,7 +20,18 @@ type Props = {
 
 export const Viewer = forwardRef(
   (
-    { className = "", width = 256, height = 256, applyNormalMap = false, geometries, cameraPosition }: Props,
+    {
+      className = "",
+      width = 256,
+      height = 256,
+      applyNormalMap = false,
+      geometries,
+      cameraPosition,
+      cameraPositionX,
+      cameraPositionY,
+      cameraPositionZ,
+      onCameraPositionChange,
+    }: Props,
     canvasRef: ForwardedRef<HTMLCanvasElement>
   ) => {
     const groupRef = useRef<Group>(null);
@@ -36,7 +51,15 @@ export const Viewer = forwardRef(
           gl={{ preserveDrawingBuffer: true }}
           ref={canvasRef}
         >
-          <Camera objectToFit={groupRef.current} cameraPosition={cameraPosition} zoom={zoom} />
+          <Camera
+            objectToFit={groupRef.current}
+            cameraPosition={cameraPosition}
+            cameraPositionX={cameraPositionX}
+            cameraPositionY={cameraPositionY}
+            cameraPositionZ={cameraPositionZ}
+            onPositionChange={onCameraPositionChange}
+            zoom={zoom}
+          />
           <group ref={groupRef} rotation={[-Math.PI / 2, 0, 0]}>
             {geometries.map((geometry, i) => (
               <Entity key={i} applyNormalMap={applyNormalMap} geometry={geometry} />
