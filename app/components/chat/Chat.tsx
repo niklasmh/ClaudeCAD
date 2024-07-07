@@ -25,11 +25,14 @@ export const Chat = () => {
   const sendingMessage = useAppStore((state) => state.sendingMessage);
   const textInput = useAppStore((state) => state.textInput);
   const model = useAppStore((state) => state.model);
+  const autoRetry = useAppStore((state) => state.autoRetry);
+  const maxRetryCount = useAppStore((state) => state.maxRetryCount);
   const setTextInput = useAppStore((state) => state.setTextInput);
   const setImageInput = useAppStore((state) => state.setImageInput);
   const setError = useAppStore((state) => state.setError);
   const setSendingMessage = useAppStore((state) => state.setSendingMessage);
   const setMessages = useAppStore((state) => state.setMessages);
+  const setAutoRetry = useAppStore((state) => state.setAutoRetry);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
@@ -118,14 +121,31 @@ export const Chat = () => {
 
     try {
       // Generate code if there is no code input
-      const textWithCode =
+      let textWithCode =
         codeInput ??
         (await llmConnector[model](buildMessageHistory(filteredMessages, "generate-model"), "text-and-image"));
 
       try {
-        const messages = runCodeFromTextWithCode(textWithCode);
-        filteredMessages.push(...messages);
-        setMessages(filteredMessages);
+        console.log("autoRetry", autoRetry);
+        if (autoRetry) {
+          for (let i = 0; i < maxRetryCount; i++) {
+            console.log("autoRetry", i);
+            const messages = runCodeFromTextWithCode(textWithCode);
+            filteredMessages.push(...messages);
+            setMessages(filteredMessages);
+            if (messages[messages.length - 1].type !== "error") {
+              break;
+            }
+            textWithCode = await llmConnector[model](
+              buildMessageHistory(filteredMessages, "generate-model"),
+              "text-and-image"
+            );
+          }
+        } else {
+          const messages = runCodeFromTextWithCode(textWithCode);
+          filteredMessages.push(...messages);
+          setMessages(filteredMessages);
+        }
       } catch (e) {
         console.log(e);
 
