@@ -98,7 +98,7 @@ export const Chat = () => {
         model,
         date: new Date().toISOString(),
         hidden: true,
-        hiddenText: "The next image is a normal map representation of the model.",
+        hiddenText: "Here is an explanation of the normal map representation of the model.",
       };
       filteredMessages.push(normalMappingImagesExplanationMessage);
       const normalMappingImagesMessage: LLMMessage = {
@@ -109,7 +109,7 @@ export const Chat = () => {
         date: new Date().toISOString(),
         editable: false,
         hidden: true,
-        hiddenText: "Normal map representation of the model.",
+        hiddenText: "Hidden normal map representation of the model.",
       };
       filteredMessages.push(normalMappingImagesMessage);
     }
@@ -179,12 +179,13 @@ export const Chat = () => {
 
   const runCode = (code: string): LLMModelMessage | LLMErrorMessage => {
     try {
-      const entities = new Function("jscad", code)(jscad);
-      const geometries = geometryTransformer(entities);
+      const originalGeometries = new Function("jscad", code)(jscad);
+      const geometries = geometryTransformer(originalGeometries);
       return {
         type: "model",
         role: "assistant",
         geometries,
+        originalGeometries,
         date: new Date().toISOString(),
       };
     } catch (e: any) {

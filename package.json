@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@jscad/regl-renderer": "^2.6.9",
     "@monaco-editor/react": "^4.6.0",
     "@react-three/drei": "^9.108.1",
     "@react-three/fiber": "^8.16.8",
@@ -21,7 +20,9 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.24.3",
+    "@jscad/io": "^2.4.8",
     "@jscad/modeling": "^2.12.2",
+    "@jscad/regl-renderer": "^2.6.9",
     "@tailwindcss/typography": "^0.5.13",
     "@types/node": "^20",
     "@types/react": "^18",

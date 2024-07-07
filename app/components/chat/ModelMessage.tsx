@@ -1,12 +1,14 @@
+import * as io from "@jscad/io";
 import { LLMModelMessage } from "@/app/types/llm";
-import { Pen, Pencil, Rotate3D, Save, Send, Trash } from "lucide-react";
+import { Download, Pen, Pencil, Rotate3D, Send, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
-import { extractImage, getImageFromCanvas } from "@/app/helpers/extractImage";
+import { getImageFromCanvas } from "@/app/helpers/extractImage";
 import { Viewer } from "../renderer/Viewer";
 import { Vector3 } from "three";
 import { mergeImages } from "@/app/helpers/mergeImages";
+import { useAppStore } from "@/app/store";
 
 type Props = {
   message: LLMModelMessage;
@@ -24,6 +26,9 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
   const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
   const [request, setRequest] = useState<string>("");
   const [_, setUpdateID] = useState<string>("");
+
+  const projectName = useAppStore((state) => state.projectName);
+  const setProjectName = useAppStore((state) => state.setProjectName);
 
   const handleToggleEditButtonClick = () => {
     setEdit((edit) => !edit);
@@ -64,6 +69,28 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
 
   const handleClearEditButtonClick = () => {
     drawingCanvasRef.current?.clearCanvas();
+  };
+
+  const handleDownloadButtonClick = () => {
+    const rawData = io.stlSerializer.serialize({ binary: false }, ...message.originalGeometries);
+    const blob = new Blob([rawData]);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    if (projectName) {
+      link.download = projectName + ".stl";
+    } else {
+      const newProjectName = prompt("Please enter a project name", "My ClaudeCAD Project");
+      if (newProjectName) {
+        setProjectName(newProjectName);
+        link.download = newProjectName + ".stl";
+      } else {
+        setProjectName("model");
+        link.download = "model.stl";
+      }
+    }
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -109,9 +136,12 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
         className="textarea textarea-primary min-h-[46px] h-[46px]"
         placeholder="E.g. Add hole through the top of the marked area."
       />
-      <div className="flex flex-row gap-2 items-center">
+      <div className="flex flex-row flex-wrap gap-2 items-center">
         <button onClick={handleSaveEditButtonClick} className="btn btn-sm btn-success">
           Request change <Send size={16} />
+        </button>
+        <button onClick={handleDownloadButtonClick} className="btn btn-sm btn-primary">
+          Download <Download size={16} />
         </button>
       </div>
     </div>
@@ -119,7 +149,7 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
 
   return (
     <div className="chat group chat-start pr-8">
-      <div className="chat-header">3D model</div>
+      <div className="chat-header">Generated 3D model</div>
       <div className="chat-bubble relative p-3">
         <div className="relative mb-2">
           <div className="absolute invisible top-0 left-0 z-0 grid grid-cols-2 grid-rows-2">

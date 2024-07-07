@@ -1,3 +1,4 @@
+import { Geom3 } from "@jscad/modeling/src/geometries/types";
 import { Geometry } from "./geometry";
 
 export type LLMMessage = LLMTextMessage | LLMImageMessage | LLMCodeMessage | LLMModelMessage | LLMErrorMessage;
@@ -31,6 +32,7 @@ export type LLMCodeMessage = {
 export type LLMModelMessage = {
   type: "model";
   geometries: Geometry[];
+  originalGeometries: Geom3[];
 } & BaseMessage;
 
 export type LLMErrorMessage = {
