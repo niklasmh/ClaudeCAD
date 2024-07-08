@@ -113,17 +113,21 @@ const modifyMessagesOfTypeAfterN = <T extends LLMMessage>(
 ): LLMMessage[] => {
   const newMessages: LLMMessage[] = [];
 
-  for (let i = 0, count = n; i < messages.length; i++) {
+  for (let i = messages.length - 1, count = n; i >= 0; i--) {
     const message = messages[i];
-    if (count > 0) {
-      newMessages.push(message);
-      count--;
-    } else if (filter(message)) {
-      newMessages.push(modifier(message as T));
+    if (filter(message)) {
+      if (count > 0) {
+        newMessages.push(message);
+        count--;
+      } else {
+        newMessages.push(modifier(message as T));
+      }
     } else {
       newMessages.push(message);
     }
   }
+
+  newMessages.reverse();
 
   return newMessages;
 };
