@@ -111,6 +111,7 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
             ref={drawingCanvasRef}
             height={256}
             width={256}
+            showControls={edit}
             onClear={handleClearEditButtonClick}
             toggleEraser={drawingCanvasRef.current?.eraseMode}
             canvasProps={{
