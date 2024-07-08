@@ -33,7 +33,6 @@ export const Chat = () => {
   const setError = useAppStore((state) => state.setError);
   const setSendingMessage = useAppStore((state) => state.setSendingMessage);
   const setMessages = useAppStore((state) => state.setMessages);
-  const setAutoRetry = useAppStore((state) => state.setAutoRetry);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
@@ -64,6 +63,7 @@ export const Chat = () => {
       const userMessage: LLMMessage = {
         role: "user",
         type: "text",
+        label: "request",
         text: textInput,
         model,
         date: new Date().toISOString(),
@@ -97,16 +97,6 @@ export const Chat = () => {
     }
 
     if (modelNormalMapImages) {
-      const normalMappingImagesExplanationMessage: LLMMessage = {
-        role: "user",
-        type: "text",
-        text: "Here are four different views of the model with normal maps applied. Normal map color representation: The purple color is in the front, green color is on the top, and red color is on the right side. The image on top left is the front view, top right is the right view, bottom left is the top view, and bottom right is the same as the main image, with sketches, just with normal mapping as well. Use the normal mappings to understand the model and the orientation of the model that needs improvement.",
-        model,
-        date: new Date().toISOString(),
-        hidden: true,
-        hiddenText: "Here is an explanation of the normal map representation of the model.",
-      };
-      filteredMessages.push(normalMappingImagesExplanationMessage);
       const normalMappingImagesMessage: LLMMessage = {
         role: "user",
         type: "image",
@@ -135,10 +125,8 @@ export const Chat = () => {
       }
 
       try {
-        console.log("autoRetry", autoRetry);
         if (autoRetry) {
           for (let i = 0; i < maxRetryCount; i++) {
-            console.log("autoRetry", i);
             const messages = runCodeFromTextWithCode(textWithCode);
             filteredMessages.push(...messages);
             setMessages(filteredMessages);
@@ -160,6 +148,7 @@ export const Chat = () => {
         const assistantMessage: LLMTextMessage = {
           role: "assistant",
           type: "text",
+          label: "assistant-no-code",
           text: textWithCode,
           model,
           date: new Date().toISOString(),

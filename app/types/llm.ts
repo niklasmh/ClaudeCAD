@@ -13,6 +13,7 @@ export type BaseMessage = {
 export type LLMTextMessage = {
   type: "text";
   text: string;
+  label: "request" | "assistant-no-code" | "description";
   model: LLMModel;
 } & BaseMessage;
 

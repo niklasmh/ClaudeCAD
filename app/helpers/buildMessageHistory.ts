@@ -1,50 +1,71 @@
-import { generateCode, generateCodeWithImage, generateCodeWithImageOnly } from "../prompts/generateCode";
-import { LLMImageMessage, LLMMessage, LLMModel, LLMTextMessage } from "../types/llm";
+import { label } from "three/examples/jsm/nodes/Nodes.js";
+import { generateCode, normalMappingDescription, requestDescription, sketchDescription } from "../prompts/generateCode";
+import { LLMImageMessage, LLMMessage, LLMTextMessage, defaultModel } from "../types/llm";
 
 export const buildMessageHistory = (messages: LLMMessage[], type: "generate-model" | "correct-model" | "fix-error") => {
   if (type === "generate-model") {
-    let newMessages = [...messages];
+    const initialMessage: LLMTextMessage = {
+      type: "text",
+      text: generateCode(),
+      label: "description",
+      model: defaultModel,
+      role: "user",
+      date: new Date().toISOString(),
+    };
+
+    let newMessages = [initialMessage, ...messages];
 
     console.log(newMessages);
 
     // Replace all, except last two sketch message, with a text message
-    newMessages = modifyNLastMessagesOfType<LLMImageMessage>(
+    newMessages = modifyMessagesOfTypeAfterN<LLMImageMessage>(
       newMessages,
-      Infinity,
+      2,
       (m) => m.type === "image" && m.label === "sketch",
-      (m) => ({ ...m, type: "text", text: "Here was an image of a sketched version of the model." }),
-      2
+      (m) => ({
+        ...m,
+        type: "text",
+        label: "description",
+        text: "Here was an image of a sketched version of the model.",
+      })
     );
 
     // Replace all, except last model request image message (with sketch), with a text message
-    newMessages = modifyNLastMessagesOfType<LLMImageMessage>(
+    newMessages = modifyMessagesOfTypeAfterN<LLMImageMessage>(
       newMessages,
-      Infinity,
+      1,
       (m) => m.type === "image" && m.label === "model-with-sketch",
-      (m) => ({ ...m, type: "text", text: "Here was an image of the 3D model." }),
-      1
+      (m) => ({ ...m, type: "text", label: "description", text: "Here was an image of the 3D model." })
     );
 
-    // Replace last text message with a code message, and make it an image message if there is an sketch in the messages
-    const containsImage = newMessages.some((m) => m.type === "image" && m.label === "sketch");
-    const containsText = newMessages.some((m) => m.type === "text");
-    if (containsText) {
-      newMessages = modifyNLastMessagesOfType<LLMTextMessage>(
-        newMessages,
-        1,
-        (m) => m.type === "text",
-        (m) => ({ ...m, text: containsImage ? generateCodeWithImage(m.text) : generateCode(m.text) })
-      );
-    } else if (containsImage) {
-      // If no text message, then we need to add some description to the image and some instructions
-      newMessages.push({
-        type: "text",
-        text: generateCodeWithImageOnly(),
-        model: (newMessages.find((m) => m.type === "image") as LLMImageMessage).model,
-        role: "user",
-        date: new Date().toISOString(),
-      });
-    }
+    // Replace all, except last normal mapping image, with a text message
+    newMessages = modifyMessagesOfTypeAfterN<LLMImageMessage>(
+      newMessages,
+      1,
+      (m) => m.type === "image" && m.label === "normal-mapping",
+      (m) => ({ ...m, type: "text", label: "description", text: "Here was an image of a normal mapping image." })
+    );
+
+    // Add description before sketches
+    newMessages = addTextMessageBeforeMessageOfType(
+      newMessages,
+      sketchDescription(),
+      (m) => m.type === "image" && m.label === "sketch"
+    );
+
+    // Add description before normal mappings
+    newMessages = addTextMessageBeforeMessageOfType(
+      newMessages,
+      normalMappingDescription(),
+      (m) => m.type === "image" && m.label === "normal-mapping"
+    );
+
+    // Add description on all requests
+    newMessages = modifyMessagesOfType<LLMTextMessage>(
+      newMessages,
+      (m) => m.type === "text" && m.label === "request",
+      (m) => ({ ...m, text: requestDescription(m.text) })
+    );
 
     console.log(newMessages);
 
@@ -54,14 +75,14 @@ export const buildMessageHistory = (messages: LLMMessage[], type: "generate-mode
   return messages.slice(-10);
 };
 
-const modifyNLastMessagesOfType = <T extends LLMMessage>(
+const modifyMessagesOfType = <T extends LLMMessage>(
   messages: LLMMessage[],
-  n: number,
   filter: (message: LLMMessage) => boolean,
   modifier: (message: T) => LLMMessage,
+  n: number = Infinity,
   skipN: number = 0
 ): LLMMessage[] => {
-  const newMessages = [];
+  const newMessages: LLMMessage[] = [];
 
   for (let i = messages.length - 1, count = n, skip = skipN; i >= 0; i--) {
     const message = messages[i];
@@ -80,7 +101,54 @@ const modifyNLastMessagesOfType = <T extends LLMMessage>(
   }
 
   newMessages.reverse();
-  console.log(newMessages);
+
+  return newMessages;
+};
+
+const modifyMessagesOfTypeAfterN = <T extends LLMMessage>(
+  messages: LLMMessage[],
+  n: number,
+  filter: (message: LLMMessage) => boolean,
+  modifier: (message: T) => LLMMessage
+): LLMMessage[] => {
+  const newMessages: LLMMessage[] = [];
+
+  for (let i = 0, count = n; i < messages.length; i++) {
+    const message = messages[i];
+    if (count > 0) {
+      newMessages.push(message);
+      count--;
+    } else if (filter(message)) {
+      newMessages.push(modifier(message as T));
+    } else {
+      newMessages.push(message);
+    }
+  }
+
+  return newMessages;
+};
+
+const addTextMessageBeforeMessageOfType = (
+  messages: LLMMessage[],
+  text: string,
+  filter: (message: LLMMessage) => boolean
+): LLMMessage[] => {
+  const newMessages: LLMMessage[] = [];
+
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i];
+    if (filter(message)) {
+      newMessages.push({
+        type: "text",
+        text,
+        label: "description",
+        model: "model" in message ? message.model : defaultModel,
+        role: message.role,
+        date: new Date().toISOString(),
+      });
+    }
+    newMessages.push(message);
+  }
 
   return newMessages;
 };
