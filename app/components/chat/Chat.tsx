@@ -122,8 +122,13 @@ export const Chat = () => {
     try {
       // Generate code if there is no code input
       let textWithCode =
-        codeInput ??
-        (await llmConnector[model](buildMessageHistory(filteredMessages, "generate-model"), "text-and-image"));
+        codeInput ?? (await llmConnector[model](buildMessageHistory(filteredMessages, "generate-model")));
+
+      if (typeof textWithCode === "object" && "error" in textWithCode) {
+        setError(textWithCode.error);
+        setSendingMessage(false);
+        return;
+      }
 
       try {
         console.log("autoRetry", autoRetry);
@@ -136,10 +141,9 @@ export const Chat = () => {
             if (messages[messages.length - 1].type !== "error") {
               break;
             }
-            textWithCode = await llmConnector[model](
-              buildMessageHistory(filteredMessages, "generate-model"),
-              "text-and-image"
-            );
+            textWithCode = (await llmConnector[model](
+              buildMessageHistory(filteredMessages, "generate-model")
+            )) as string;
           }
         } else {
           const messages = runCodeFromTextWithCode(textWithCode);
@@ -160,8 +164,6 @@ export const Chat = () => {
         filteredMessages.push(assistantMessage);
         setMessages(filteredMessages);
       }
-
-      console.log("send", filteredMessages);
 
       setTextInput("");
       setImageInput("");
@@ -411,7 +413,12 @@ export const Chat = () => {
           </div>
         </div>
       </div>
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <div role="alert" className="alert">
+          <CircleAlert size={16} />
+          <span>{error}</span>
+        </div>
+      )}
     </div>
   );
 };

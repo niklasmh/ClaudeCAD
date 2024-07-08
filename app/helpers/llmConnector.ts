@@ -1,32 +1,59 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { LLMMessage, LLMTextMessage } from "../types/llm";
+import { receiveFromPersistentStore, saveToPersistentStore } from "./persistentStorage";
+
+type ErrorMessage = { error: string };
 
 type LLMConnector = {
-  [model: string]: (messages: LLMMessage[], d: string) => Promise<string>;
+  [model: string]: (messages: LLMMessage[]) => Promise<string | ErrorMessage>;
 };
 
-const anthropicConnector = async (model: string, messages: LLMMessage[], dummyType: string | null = null) => {
+const getAPIKey = (): string => {
+  try {
+    const key = receiveFromPersistentStore<string>("anthropic_api_key", "");
+    if (!key) {
+      throw new Error("No API key found");
+    }
+    return key;
+  } catch (e) {
+    const key = prompt("Please enter your Anthropic API key");
+    if (key) {
+      saveToPersistentStore<string>("anthropic_api_key", key);
+      return key;
+    }
+    return "";
+  }
+};
+
+const anthropicConnector = async (model: string, messages: LLMMessage[]): Promise<string | ErrorMessage> => {
   const response = (await fetch("/api/claude", {
     method: "POST",
     body: JSON.stringify({
       model: mapModel(model),
-      //dummyType,
+      //dummyType: "text-and-image",
       temperature: 0,
       system: getSystemMessage(messages),
       messages: groupMessagesByRole(messages.map(mapMessage)),
       max_tokens: 1000,
+      anthropic_api_key: getAPIKey(),
     }),
-  }).then((r) => r.json())) as Anthropic.Messages.Message;
-
-  return (response.content[0] as any).text;
+  }).then((r) => r.json())) as Anthropic.Messages.Message | ErrorMessage;
+  try {
+    if ("error" in response) {
+      return response;
+    }
+    return (response.content[0] as any).text;
+  } catch (e) {
+    return response as never as ErrorMessage;
+  }
 };
 
 export const llmConnector: LLMConnector = {
-  "claude-1.2-instant": (messages, d) => anthropicConnector("claude-1.2-instant", messages, d),
-  "claude-3-opus": (messages, d) => anthropicConnector("claude-3-opus", messages, d),
-  "claude-3-sonnet": (messages, d) => anthropicConnector("claude-3-sonnet", messages, d),
-  "claude-3-haiku": (messages, d) => anthropicConnector("claude-3-haiku", messages, d),
-  "claude-3.5": (messages, d) => anthropicConnector("claude-3.5", messages, d),
+  "claude-1.2-instant": (messages) => anthropicConnector("claude-1.2-instant", messages),
+  "claude-3-opus": (messages) => anthropicConnector("claude-3-opus", messages),
+  "claude-3-sonnet": (messages) => anthropicConnector("claude-3-sonnet", messages),
+  "claude-3-haiku": (messages) => anthropicConnector("claude-3-haiku", messages),
+  "claude-3.5": (messages) => anthropicConnector("claude-3.5", messages),
 };
 
 const getSystemMessage = (messages: LLMMessage[]): string => {
