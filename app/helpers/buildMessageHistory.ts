@@ -1,32 +1,53 @@
-import { generateCode, generateCodeWithImage } from "../prompts/generateCode";
-import { LLMImageMessage, LLMMessage, LLMTextMessage } from "../types/llm";
+import { generateCode, generateCodeWithImage, generateCodeWithImageOnly } from "../prompts/generateCode";
+import { LLMImageMessage, LLMMessage, LLMModel, LLMTextMessage } from "../types/llm";
 
 export const buildMessageHistory = (messages: LLMMessage[], type: "generate-model" | "correct-model" | "fix-error") => {
   if (type === "generate-model") {
-    let newMessages = messages; //.slice(-10);
+    let newMessages = [...messages];
+
     console.log(newMessages);
+
+    // Replace all, except last two sketch message, with a text message
     newMessages = modifyNLastMessagesOfType<LLMImageMessage>(
       newMessages,
-      2,
-      (m) => m.type === "image" && m.role === "user",
+      Infinity,
+      (m) => m.type === "image" && m.label === "sketch",
       (m) => ({ ...m, type: "text", text: "Here was an image of a sketched version of the model." }),
-      1
+      2
     );
+
+    // Replace all, except last model request image message (with sketch), with a text message
     newMessages = modifyNLastMessagesOfType<LLMImageMessage>(
       newMessages,
-      1,
-      (m) => m.type === "image" && m.role === "assistant",
+      Infinity,
+      (m) => m.type === "image" && m.label === "model-with-sketch",
       (m) => ({ ...m, type: "text", text: "Here was an image of the 3D model." }),
       1
     );
-    const containsImage = newMessages.some((m) => m.type === "image" && m.role === "user");
-    newMessages = modifyNLastMessagesOfType<LLMTextMessage>(
-      newMessages,
-      1,
-      (m) => m.type === "text",
-      (m) => ({ ...m, text: containsImage ? generateCodeWithImage(m.text) : generateCode(m.text) })
-    );
+
+    // Replace last text message with a code message, and make it an image message if there is an sketch in the messages
+    const containsImage = newMessages.some((m) => m.type === "image" && m.label === "sketch");
+    const containsText = newMessages.some((m) => m.type === "text");
+    if (containsText) {
+      newMessages = modifyNLastMessagesOfType<LLMTextMessage>(
+        newMessages,
+        1,
+        (m) => m.type === "text",
+        (m) => ({ ...m, text: containsImage ? generateCodeWithImage(m.text) : generateCode(m.text) })
+      );
+    } else if (containsImage) {
+      // If no text message, then we need to add some description to the image and some instructions
+      newMessages.push({
+        type: "text",
+        text: generateCodeWithImageOnly(),
+        model: (newMessages.find((m) => m.type === "image") as LLMImageMessage).model,
+        role: "user",
+        date: new Date().toISOString(),
+      });
+    }
+
     console.log(newMessages);
+
     return newMessages;
   }
 

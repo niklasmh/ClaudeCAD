@@ -18,6 +18,7 @@ import { extractError } from "@/app/helpers/extractError";
 import { ModelMessage } from "./ModelMessage";
 import { ErrorMessage } from "./ErrorMessage";
 import { mergeImages } from "@/app/helpers/mergeImages";
+import { CircleAlert } from "lucide-react";
 
 export const Chat = () => {
   const messages = useAppStore((state) => state.messages);
@@ -75,6 +76,7 @@ export const Chat = () => {
       const userMessage: LLMMessage = {
         role: "user",
         type: "image",
+        label: "sketch",
         image,
         model,
         date: new Date().toISOString(),
@@ -86,6 +88,7 @@ export const Chat = () => {
       const userMessage: LLMMessage = {
         role: "user",
         type: "image",
+        label: "model-with-sketch",
         image: imageInput,
         model,
         date: new Date().toISOString(),
@@ -107,6 +110,7 @@ export const Chat = () => {
       const normalMappingImagesMessage: LLMMessage = {
         role: "user",
         type: "image",
+        label: "normal-mapping",
         image: modelNormalMapImages,
         model,
         date: new Date().toISOString(),

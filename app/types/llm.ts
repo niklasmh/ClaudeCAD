@@ -19,6 +19,7 @@ export type LLMTextMessage = {
 export type LLMImageMessage = {
   type: "image";
   image: string;
+  label: "sketch" | "model-with-sketch" | "model" | "normal-mapping";
   model: LLMModel;
   editable?: boolean;
 } & BaseMessage;
