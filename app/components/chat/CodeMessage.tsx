@@ -11,19 +11,9 @@ type Props = {
 };
 
 export const CodeMessage = ({ message, onChange, onRun, onDelete }: Props) => {
-  const [edit, setEdit] = useState<boolean>(false);
   const [currentMessage, setCurrentMessage] = useState<LLMCodeMessage>(message);
 
   const isUser = message.role === "user";
-
-  const handleOpenEditButtonClick = () => {
-    setEdit(true);
-  };
-
-  const handleSaveEditButtonClick = () => {
-    setEdit(false);
-    onChange(currentMessage);
-  };
 
   const handleCodeChange = (code: string) => {
     setCurrentMessage({ ...currentMessage, text: code });
@@ -40,16 +30,6 @@ export const CodeMessage = ({ message, onChange, onRun, onDelete }: Props) => {
         isUser ? "right-full flex-row-reverse" : "left-full"
       }`}
     >
-      {!edit && (
-        <div onClick={handleOpenEditButtonClick} className="hover:opacity-80 cursor-pointer">
-          <Pencil size={16} />
-        </div>
-      )}
-      {edit && (
-        <div onClick={handleSaveEditButtonClick} className="hover:opacity-80 cursor-pointer">
-          <Save size={16} />
-        </div>
-      )}
       <div onClick={() => onRun(currentMessage.text)} className="hover:opacity-80 cursor-pointer">
         <Play size={16} />
       </div>
@@ -78,7 +58,7 @@ export const CodeMessage = ({ message, onChange, onRun, onDelete }: Props) => {
     <div className={`chat group ${isUser ? "chat-end pl-12" : "chat-start pr-12"}`}>
       <div className="chat-header">{modelNames[message.model]}</div>
       <div className={`chat-bubble relative ${isUser ? "bg-[#2a323c88]" : ""} ${message.hidden ? "" : "w-full p-3"}`}>
-        {!message.hidden && <CodeEditor readOnly={!edit} code={currentMessage.text} setCode={handleCodeChange} />}
+        {!message.hidden && <CodeEditor code={currentMessage.text} setCode={handleCodeChange} />}
         {message.hidden && (
           <div className="text-gray-400">
             <i>{message.hiddenText || "This code is hidden"}</i>
