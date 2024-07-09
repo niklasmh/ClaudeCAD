@@ -130,7 +130,6 @@ const groupMessagesByRole = (
       ];
     }
   }
-  console.log(newMessages);
 
   return newMessages;
 };

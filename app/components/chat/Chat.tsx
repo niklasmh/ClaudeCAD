@@ -19,6 +19,7 @@ import { ModelMessage } from "./ModelMessage";
 import { ErrorMessage } from "./ErrorMessage";
 import { mergeImages } from "@/app/helpers/mergeImages";
 import { CircleAlert } from "lucide-react";
+import { MessageGroup } from "./MessageGroup";
 
 export const Chat = () => {
   const [messages, setMessages] = useState<LLMMessage[]>([]);
@@ -324,13 +325,17 @@ export const Chat = () => {
       <div className="flex flex-col max-h-full overflow-y-auto overflow-x-hidden">
         {
           messages.reduce(
-            ({ history, prevMessage }, message, index) => {
-              const newMessages = [...history];
+            (acc, message, index) => {
+              const history = [...acc.history];
+              const prevMessage = { ...acc.prevMessage };
+              const group = { ...acc.group };
+
+              let messageElement = null;
 
               if (message.type === "text") {
-                newMessages.push(
+                messageElement = (
                   <ChatMessage
-                    key={index}
+                    key={message.type + index}
                     message={message}
                     onChange={(message) => updateMessage(message, index)}
                     onDelete={() => deleteMessage(index)}
@@ -340,9 +345,9 @@ export const Chat = () => {
               }
 
               if (message.type === "code") {
-                newMessages.push(
+                messageElement = (
                   <CodeMessage
-                    key={index}
+                    key={message.type + index}
                     message={message}
                     onChange={(message) => updateMessage(message, index)}
                     onDelete={() => deleteMessage(index)}
@@ -352,9 +357,9 @@ export const Chat = () => {
               }
 
               if (message.type === "image") {
-                newMessages.push(
+                messageElement = (
                   <SketchMessage
-                    key={index}
+                    key={message.type + index}
                     message={message}
                     onChange={(message) => updateMessage(message, index)}
                     onDelete={() => deleteMessage(index)}
@@ -364,9 +369,9 @@ export const Chat = () => {
               }
 
               if (message.type === "model") {
-                newMessages.push(
+                messageElement = (
                   <ModelMessage
-                    key={index}
+                    key={message.type + index}
                     message={message}
                     onSketch={(sketch, modelImage, modelNormalMapImages, request) =>
                       applyRequestToModel(sketch, modelImage, modelNormalMapImages, request, index)
@@ -374,25 +379,52 @@ export const Chat = () => {
                     onDelete={() => deleteMessage(index)}
                   />
                 );
+
+                if (prevMessage?.type === "code" && group.type === "fixCode") {
+                  history.pop();
+                  history.push(<MessageGroup key={"group" + index} type={"fixCode"} messages={group.messages} />);
+                  group.type = null;
+                  group.messages = [];
+                }
               }
 
               if (message.type === "error") {
-                newMessages.push(
+                messageElement = (
                   <ErrorMessage
-                    key={index}
+                    key={message.type + index}
                     message={message}
                     onFix={() => sendMessage({ sendFromIndex: index })}
                     onDelete={() => deleteMessage(index)}
                   />
                 );
+
+                if (prevMessage?.type === "code" && group.type === null) {
+                  group.type = "fixCode";
+                  group.messages.push(history.pop());
+                }
               }
 
-              return { history: newMessages, prevMessage: message };
+              if (group.type) {
+                group.messages.push(messageElement);
+                history.pop();
+                history.push(<MessageGroup key="group" type={group.type} messages={group.messages} loading />);
+              } else {
+                history.push(messageElement);
+              }
+
+              return { history, prevMessage: message, prevMessageElement: messageElement, group };
             },
             {
               history: [],
-              prevMessage: null,
-            } as { history: ReactNode[]; prevMessage: LLMMessage | null }
+              prevMessage: messages[0],
+              prevMessageElement: null,
+              group: { type: null, messages: [] },
+            } as {
+              history: ReactNode[];
+              prevMessage: LLMMessage;
+              prevMessageElement: ReactNode;
+              group: { type: "fixCode" | null; messages: ReactNode[] };
+            }
           ).history
         }
       </div>
