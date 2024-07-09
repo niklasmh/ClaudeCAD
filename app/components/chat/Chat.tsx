@@ -4,7 +4,7 @@ import * as jscad from "@jscad/modeling";
 import { llmConnector } from "@/app/helpers/llmConnector";
 import { useAppStore } from "@/app/store";
 import { LLMCodeMessage, LLMErrorMessage, LLMMessage, LLMModelMessage, LLMTextMessage } from "@/app/types/llm";
-import { KeyboardEvent, useRef } from "react";
+import { KeyboardEvent, useRef, useState } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { CodeMessage } from "./CodeMessage";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
@@ -21,7 +21,7 @@ import { mergeImages } from "@/app/helpers/mergeImages";
 import { CircleAlert } from "lucide-react";
 
 export const Chat = () => {
-  const messages = useAppStore((state) => state.messages);
+  const [messages, setMessages] = useState<LLMMessage[]>([]);
   const error = useAppStore((state) => state.error);
   const sendingMessage = useAppStore((state) => state.sendingMessage);
   const textInput = useAppStore((state) => state.textInput);
@@ -32,7 +32,6 @@ export const Chat = () => {
   const setImageInput = useAppStore((state) => state.setImageInput);
   const setError = useAppStore((state) => state.setError);
   const setSendingMessage = useAppStore((state) => state.setSendingMessage);
-  const setMessages = useAppStore((state) => state.setMessages);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
@@ -133,9 +132,7 @@ export const Chat = () => {
             if (messages[messages.length - 1].type !== "error") {
               break;
             }
-            textWithCode = (await llmConnector[model](
-              buildMessageHistory(filteredMessages, "generate-model")
-            )) as string;
+            textWithCode = (await llmConnector[model](buildMessageHistory(filteredMessages, "fix-error"))) as string;
           }
         } else {
           const messages = runCodeFromTextWithCode(textWithCode);
@@ -393,7 +390,7 @@ export const Chat = () => {
           <div className="flex flex-row gap-4 items-end">
             <textarea
               className="flex-1 h-[48px] max-h-[400px] textarea textarea-primary"
-              placeholder="Enter a message..."
+              placeholder="Enter a description..."
               value={textInput}
               ref={textareaRef}
               onChange={(event) => setTextInput(event.target.value)}

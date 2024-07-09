@@ -1,4 +1,4 @@
-import { codeTemplate } from "./variables/codeTemplate"
+import { codeTemplate } from "./variables/codeTemplate";
 
 export const fixCodeFromError = (code: string, error: string): string => {
   return `I got this error when I tried to run the code:
@@ -22,5 +22,5 @@ Generate the code based on this template:
 \`\`\`javascript
 ${codeTemplate}
 \`\`\`
-`
-}
+`;
+};

@@ -1,6 +1,14 @@
 import { label } from "three/examples/jsm/nodes/Nodes.js";
 import { generateCode, normalMappingDescription, requestDescription, sketchDescription } from "../prompts/generateCode";
-import { LLMImageMessage, LLMMessage, LLMTextMessage, defaultModel } from "../types/llm";
+import {
+  LLMCodeMessage,
+  LLMErrorMessage,
+  LLMImageMessage,
+  LLMMessage,
+  LLMTextMessage,
+  defaultModel,
+} from "../types/llm";
+import { fixCodeFromError } from "../prompts/fixCodeFromError";
 
 export const buildMessageHistory = (messages: LLMMessage[], type: "generate-model" | "correct-model" | "fix-error") => {
   if (type === "generate-model") {
@@ -68,6 +76,32 @@ export const buildMessageHistory = (messages: LLMMessage[], type: "generate-mode
     );
 
     console.log(newMessages);
+
+    return newMessages;
+  }
+
+  if (type === "fix-error") {
+    const workingCodeMessageIndex = Math.max(
+      0,
+      messages.findLastIndex((m) => m.type === "model")
+    );
+    const codeMessage = messages.findLast((m) => m.type === "code") as LLMCodeMessage;
+    let newMessages = messages.slice(workingCodeMessageIndex).filter((m) => m.type !== "image" && m.type !== "model");
+
+    if (codeMessage) {
+      newMessages = modifyMessagesOfType<LLMCodeMessage>(
+        newMessages,
+        (m) => m.type === "code",
+        (m) => ({ ...m, role: "user" })
+      );
+
+      newMessages = modifyMessagesOfType<LLMErrorMessage>(
+        newMessages,
+        (m) => m.type === "error",
+        (m) => ({ ...m, text: fixCodeFromError(codeMessage.text, m.text) }),
+        1
+      );
+    }
 
     return newMessages;
   }
