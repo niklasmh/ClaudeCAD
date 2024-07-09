@@ -1,3 +1,4 @@
+import { BugPlay } from "lucide-react";
 import { ReactNode, useState } from "react";
 
 type Props = {
@@ -8,8 +9,9 @@ type Props = {
 
 const groupTypes = {
   fixCode: {
-    title: "Errors",
-    loadingTitle: "Loading Errors",
+    title: "Fixed some bugs",
+    loadingTitle: "Fixing some bugs...",
+    icon: <BugPlay size={16} />,
   },
 };
 
@@ -20,19 +22,16 @@ export const MessageGroup = ({ messages, type, loading }: Props) => {
     return null;
   }
 
-  const { title, loadingTitle } = groupTypes[type];
+  const { title, loadingTitle, icon } = groupTypes[type];
 
   const toggleOpen = () => {
     setOpen((o) => !o);
   };
 
   return (
-    <div
-      onClick={toggleOpen}
-      className={`collapse collapse-arrow bg-[#0001] my-4 ${open ? "collapse-open" : "collapse-close"}`}
-    >
-      <div className="collapse-title bg-[#0001] cursor-pointer flex flex-row gap-4">
-        {loading && <span className="loading loading-spinner loading-sm"></span>}
+    <div className={`collapse collapse-arrow bg-[#0001] my-4 ${open ? "collapse-open" : "collapse-close"}`}>
+      <div className="collapse-title bg-[#0001] cursor-pointer flex flex-row gap-4" onClick={toggleOpen}>
+        {loading ? <span className="loading loading-spinner loading-sm"></span> : icon}
         <span>{loading ? loadingTitle : title}</span>
       </div>
       <div className="collapse-content">

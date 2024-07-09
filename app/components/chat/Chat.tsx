@@ -22,15 +22,16 @@ import { CircleAlert } from "lucide-react";
 import { MessageGroup } from "./MessageGroup";
 
 export const Chat = () => {
-  const [messages, setMessages] = useState<LLMMessage[]>([]);
   const error = useAppStore((state) => state.error);
   const sendingMessage = useAppStore((state) => state.sendingMessage);
   const textInput = useAppStore((state) => state.textInput);
+  const messages = useAppStore((state) => state.messages);
   const model = useAppStore((state) => state.model);
   const autoRetry = useAppStore((state) => state.autoRetry);
   const maxRetryCount = useAppStore((state) => state.maxRetryCount);
   const setTextInput = useAppStore((state) => state.setTextInput);
   const setImageInput = useAppStore((state) => state.setImageInput);
+  const setMessages = useAppStore((state) => state.setMessages);
   const setError = useAppStore((state) => state.setError);
   const setSendingMessage = useAppStore((state) => state.setSendingMessage);
 
