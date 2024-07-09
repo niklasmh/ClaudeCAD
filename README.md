@@ -11,7 +11,10 @@ npm run dev
 # TODO:
 
 - Add examples.
-- Make message history more robust.
 - Deal with 2D shapes not being rendered?
-- Go through flow
-  - Make sure when pressing "Not correct" it hides next message (or show what you picked?), and if no drawing, use the previous one somehow?
+- Store history?
+- Multiple chats? (e.g. one for each shape, and being able to merge them)
+  - Too ambitious for delivery though, but maybe later
+- Use reducer on messages to simulate a dynamic progress
+- Make video of the app in action
+- Deploy to vercel
