@@ -458,8 +458,8 @@ export const Chat = () => {
                 <SketchInput
                   ref={drawingCanvasRef}
                   showControls
-                  width={420}
-                  height={420}
+                  width={256}
+                  height={256}
                   onClear={() => {
                     drawingCanvasRef.current?.clearCanvas();
                   }}
