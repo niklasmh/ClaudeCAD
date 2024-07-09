@@ -24,7 +24,6 @@ export function Camera({
 }: Props) {
   const { camera } = useThree();
   const controls = useRef<any>(null);
-  const axis = useRef<AxesHelper>(null);
   const hasFit = useRef<boolean>(false);
   const centerPositionRef = useRef<Vector3>();
   const radiusRef = useRef<number>();
@@ -81,7 +80,6 @@ export function Camera({
     <>
       <ambientLight intensity={Math.PI / 2} />
       <directionalLight intensity={Math.PI} position={[1, 2, -1.5]} />
-      <axesHelper ref={axis} />
       <OrbitControls
         ref={controls}
         args={[camera]}
