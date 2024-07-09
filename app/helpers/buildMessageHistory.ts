@@ -1,4 +1,3 @@
-import { label } from "three/examples/jsm/nodes/Nodes.js";
 import { generateCode, normalMappingDescription, requestDescription, sketchDescription } from "../prompts/generateCode";
 import {
   LLMCodeMessage,
@@ -10,7 +9,7 @@ import {
 } from "../types/llm";
 import { fixCodeFromError } from "../prompts/fixCodeFromError";
 
-export const buildMessageHistory = (messages: LLMMessage[], type: "generate-model" | "correct-model" | "fix-error") => {
+export const buildMessageHistory = (messages: LLMMessage[], type: "generate-model" | "fix-error") => {
   if (type === "generate-model") {
     const initialMessage: LLMTextMessage = {
       type: "text",
@@ -22,8 +21,6 @@ export const buildMessageHistory = (messages: LLMMessage[], type: "generate-mode
     };
 
     let newMessages = [initialMessage, ...messages];
-
-    console.log(newMessages);
 
     // Replace all, except last two sketch message, with a text message
     newMessages = modifyMessagesOfTypeAfterN<LLMImageMessage>(
@@ -74,8 +71,6 @@ export const buildMessageHistory = (messages: LLMMessage[], type: "generate-mode
       (m) => m.type === "text" && m.label === "request",
       (m) => ({ ...m, text: requestDescription(m.text) })
     );
-
-    console.log(newMessages);
 
     return newMessages;
   }

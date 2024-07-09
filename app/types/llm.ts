@@ -7,7 +7,7 @@ export type BaseMessage = {
   role: Role;
   date: string;
   hidden?: boolean;
-  hiddenText?: string;
+  hiddenText?: string | null;
 };
 
 export type LLMTextMessage = {

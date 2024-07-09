@@ -39,6 +39,7 @@ export const Chat = () => {
   const sendMessage = async ({
     textInput,
     imageInput,
+    hiddenInput,
     modelNormalMapImages,
     codeInput,
     sendFromIndex = Infinity,
@@ -46,6 +47,7 @@ export const Chat = () => {
   }: {
     textInput?: string;
     imageInput?: string;
+    hiddenInput?: string;
     modelNormalMapImages?: string;
     codeInput?: string;
     sendFromIndex?: number;
@@ -57,6 +59,20 @@ export const Chat = () => {
     setSendingMessage(true);
 
     const filteredMessages = [...overrideMessages].filter((_, index) => index <= sendFromIndex);
+
+    if (hiddenInput) {
+      const userMessage: LLMMessage = {
+        role: "user",
+        type: "text",
+        label: "request",
+        text: hiddenInput,
+        hidden: true,
+        hiddenText: null,
+        model,
+        date: new Date().toISOString(),
+      };
+      filteredMessages.push(userMessage);
+    }
 
     if (textInput) {
       const userMessage: LLMMessage = {
@@ -213,6 +229,7 @@ export const Chat = () => {
       return {
         type: "error",
         role: "user",
+        hidden: true,
         text: error,
         date: new Date().toISOString(),
       };
@@ -226,18 +243,18 @@ export const Chat = () => {
     request: string,
     sendFromIndex: number
   ) => {
-    let textInput = "";
+    let hiddenInput = "";
     if (modelImage) {
-      textInput = "This is an image of the rendered 3D model.";
+      hiddenInput = "This is an image of the rendered 3D model.";
     }
     if (sketch) {
-      textInput = "This is a sketch of what I want to make.";
+      hiddenInput = "This is a sketch of what I want to make.";
     }
     if (modelImage && sketch) {
-      textInput = "This is an image of the rendered 3D model, with sketch applied.";
+      hiddenInput = "This is an image of the rendered 3D model, with sketch applied.";
     }
     if (request) {
-      textInput += " I want you to apply this request on the 3D model:\n\n<request>\n" + request + "</request>";
+      hiddenInput += " I want you to apply this request, in the next message, on the 3D model:";
     }
     const imageInput = (await mergeImages([modelImage, sketch])) || sketch || modelImage;
     const modelNormalMapImagesWithSketch =
@@ -253,8 +270,9 @@ export const Chat = () => {
       })) || modelNormalMapImages;
 
     sendMessage({
-      textInput,
+      textInput: request,
       imageInput,
+      hiddenInput,
       modelNormalMapImages: modelNormalMapImagesWithSketch,
       sendFromIndex,
     });

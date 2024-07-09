@@ -1,4 +1,4 @@
-import { LLMMessage, LLMTextMessage, modelNames } from "@/app/types/llm";
+import { LLMTextMessage, modelNames } from "@/app/types/llm";
 import { Eye, Pencil, RefreshCw, Save, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -54,6 +54,10 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
       resizeTextarea();
     }, 100);
   }, [edit]);
+
+  if (message.hidden && message.hiddenText === null) {
+    return null;
+  }
 
   const tools = (
     <div
