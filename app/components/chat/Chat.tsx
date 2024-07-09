@@ -36,6 +36,17 @@ export const Chat = () => {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    anchorRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToBottomDelayed = (delay = 100) => {
+    setTimeout(() => {
+      scrollToBottom();
+    }, delay);
+  };
 
   const sendMessage = async ({
     textInput,
@@ -128,6 +139,7 @@ export const Chat = () => {
     }
 
     setMessages(filteredMessages);
+    scrollToBottomDelayed();
 
     try {
       // Generate code if there is no code input
@@ -137,6 +149,7 @@ export const Chat = () => {
       if (typeof textWithCode === "object" && "error" in textWithCode) {
         setError(textWithCode.error);
         setSendingMessage(false);
+        scrollToBottomDelayed();
         return;
       }
 
@@ -183,6 +196,7 @@ export const Chat = () => {
       if (imageInput) setImageInput(imageInput);
     }
 
+    scrollToBottomDelayed();
     setSendingMessage(false);
   };
 
@@ -427,6 +441,7 @@ export const Chat = () => {
             }
           ).history
         }
+        <div ref={anchorRef} />
       </div>
       <div
         className="fixed bottom-0 left-0 right-0 bg-base-100 z-20 pt-4 pb-6 px-4"
