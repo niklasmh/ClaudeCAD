@@ -9,8 +9,17 @@ export default function Home() {
           boxShadow: "0 0 20px 5px var(--fallback-b1,oklch(var(--b1)))",
         }}
       >
-        <h1 className="text-4xl text-center my-4">ClaudeCAD</h1>
-        <p className="text-base text-center">Making models for 3D printing even more intuitive.</p>
+        <div className="flex flex-row items-center gap-6 max-w-[420px] mx-auto">
+          <img
+            src="/icon.png"
+            alt="Logo"
+            className="w-[100px] h-[100px] mx-auto mt-4 mix-blend-color-dodge rounded-2xl"
+          />
+          <div className="flex-1">
+            <h1 className="text-4xl my-4">ClaudeCAD</h1>
+            <p className="text-base">Making models for 3D printing intuitive.</p>
+          </div>
+        </div>
       </div>
       <Chat />
     </main>
