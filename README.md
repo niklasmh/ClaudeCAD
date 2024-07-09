@@ -1,3 +1,7 @@
+<div align="center">
+	<img src="app/icon.png" width="256" height="256">
+</div>
+
 # ClaudeCAD
 
 Your 3D print modeling assistant.
