@@ -4,7 +4,7 @@ import * as jscad from "@jscad/modeling";
 import { llmConnector } from "@/app/helpers/llmConnector";
 import { useAppStore } from "@/app/store";
 import { LLMCodeMessage, LLMErrorMessage, LLMMessage, LLMModelMessage, LLMTextMessage } from "@/app/types/llm";
-import { KeyboardEvent, useRef, useState } from "react";
+import { KeyboardEvent, ReactNode, useRef, useState } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { CodeMessage } from "./CodeMessage";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
@@ -322,64 +322,79 @@ export const Chat = () => {
   return (
     <div className="w-full flex flex-col justify-center">
       <div className="flex flex-col max-h-full overflow-y-auto overflow-x-hidden">
-        {messages.map((message, index) => {
-          if (message.type === "text") {
-            return (
-              <ChatMessage
-                key={index}
-                message={message}
-                onChange={(message) => updateMessage(message, index)}
-                onDelete={() => deleteMessage(index)}
-                onRerun={() => onRerun(index)}
-              />
-            );
-          }
-          if (message.type === "code") {
-            return (
-              <CodeMessage
-                key={index}
-                message={message}
-                onChange={(message) => updateMessage(message, index)}
-                onDelete={() => deleteMessage(index)}
-                onRun={(code) => onRunCode(code, index)}
-              />
-            );
-          }
-          if (message.type === "image") {
-            return (
-              <SketchMessage
-                key={index}
-                message={message}
-                onChange={(message) => updateMessage(message, index)}
-                onDelete={() => deleteMessage(index)}
-                onRerun={() => onRerun(index)}
-              />
-            );
-          }
-          if (message.type === "model") {
-            return (
-              <ModelMessage
-                key={index}
-                message={message}
-                onSketch={(sketch, modelImage, modelNormalMapImages, request) =>
-                  applyRequestToModel(sketch, modelImage, modelNormalMapImages, request, index)
-                }
-                onDelete={() => deleteMessage(index)}
-              />
-            );
-          }
-          if (message.type === "error") {
-            return (
-              <ErrorMessage
-                key={index}
-                message={message}
-                onFix={() => sendMessage({ sendFromIndex: index })}
-                onDelete={() => deleteMessage(index)}
-              />
-            );
-          }
-          return <div key={index}>{(message as any).type}</div>;
-        })}
+        {
+          messages.reduce(
+            ({ history, prevMessage }, message, index) => {
+              const newMessages = [...history];
+
+              if (message.type === "text") {
+                newMessages.push(
+                  <ChatMessage
+                    key={index}
+                    message={message}
+                    onChange={(message) => updateMessage(message, index)}
+                    onDelete={() => deleteMessage(index)}
+                    onRerun={() => onRerun(index)}
+                  />
+                );
+              }
+
+              if (message.type === "code") {
+                newMessages.push(
+                  <CodeMessage
+                    key={index}
+                    message={message}
+                    onChange={(message) => updateMessage(message, index)}
+                    onDelete={() => deleteMessage(index)}
+                    onRun={(code) => onRunCode(code, index)}
+                  />
+                );
+              }
+
+              if (message.type === "image") {
+                newMessages.push(
+                  <SketchMessage
+                    key={index}
+                    message={message}
+                    onChange={(message) => updateMessage(message, index)}
+                    onDelete={() => deleteMessage(index)}
+                    onRerun={() => onRerun(index)}
+                  />
+                );
+              }
+
+              if (message.type === "model") {
+                newMessages.push(
+                  <ModelMessage
+                    key={index}
+                    message={message}
+                    onSketch={(sketch, modelImage, modelNormalMapImages, request) =>
+                      applyRequestToModel(sketch, modelImage, modelNormalMapImages, request, index)
+                    }
+                    onDelete={() => deleteMessage(index)}
+                  />
+                );
+              }
+
+              if (message.type === "error") {
+                newMessages.push(
+                  <ErrorMessage
+                    key={index}
+                    message={message}
+                    onFix={() => sendMessage({ sendFromIndex: index })}
+                    onDelete={() => deleteMessage(index)}
+                  />
+                );
+              }
+
+              return { history: newMessages, prevMessage: message };
+            },
+            {
+              history: [],
+              prevMessage: null,
+            } as { history: ReactNode[]; prevMessage: LLMMessage | null }
+          ).history
+        }
       </div>
       <div
         className="fixed bottom-0 left-0 right-0 bg-base-100 z-20 pt-4 pb-6 px-4"
