@@ -466,7 +466,7 @@ export const Chat = () => {
           {messages.length === 0 && (
             <div className="text-center">
               <p className="text-lg">Draw and/or describe what you want to make.</p>
-              <p className="text-xs text-[#666]">Quick tip: Start with simple geometry in 2D.</p>
+              <p className="text-xs text-[#666]">Quick tip: Start with simple geometry.</p>
               <div className="flex flex-row justify-center mt-4">
                 <SketchInput
                   ref={drawingCanvasRef}
