@@ -1,5 +1,5 @@
 import { LLMTextMessage, modelNames } from "@/app/types/llm";
-import { Eye, Pencil, RefreshCw, Save, Trash } from "lucide-react";
+import { Eye, EyeOff, Pencil, RefreshCw, Save, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -29,6 +29,11 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
   const handleShow = () => {
     setCurrentMessage({ ...currentMessage, hidden: false });
     onChange({ ...currentMessage, hidden: false });
+  };
+
+  const handleHide = () => {
+    setCurrentMessage({ ...currentMessage, hidden: true });
+    onChange({ ...currentMessage, hidden: true });
   };
 
   const resizeTextarea = () => {
@@ -73,6 +78,11 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
       {edit && (
         <div onClick={handleSaveEditButtonClick} className="hover:opacity-80 cursor-pointer" title="Save message">
           <Save size={16} />
+        </div>
+      )}
+      {message.hidden === false && (
+        <div onClick={handleHide} className="hover:opacity-80 cursor-pointer" title="Hide message">
+          <EyeOff size={16} />
         </div>
       )}
       {isUser && (

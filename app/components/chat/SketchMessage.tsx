@@ -1,5 +1,5 @@
 import { LLMImageMessage, modelNames } from "@/app/types/llm";
-import { Eye, Pencil, RefreshCw, Save, Trash } from "lucide-react";
+import { Eye, EyeOff, Pencil, RefreshCw, Save, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
@@ -39,6 +39,10 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
     onChange({ ...message, hidden: false });
   };
 
+  const handleHide = () => {
+    onChange({ ...message, hidden: true });
+  };
+
   const resizeTextarea = () => {
     const el = textareaRef.current;
 
@@ -75,6 +79,11 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
           <Save size={16} />
         </div>
       )}
+      {message.hidden === false && (
+        <div onClick={handleHide} className="hover:opacity-80 cursor-pointer" title="Hide sketch">
+          <EyeOff size={16} />
+        </div>
+      )}
       {isUser && (
         <div onClick={onRerun} className="hover:opacity-80 cursor-pointer">
           <RefreshCw size={16} />
@@ -92,10 +101,10 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
         isUser ? "right-full flex-row-reverse" : "left-full"
       }`}
     >
-      <div onClick={handleShow} className="hover:opacity-80 cursor-pointer" title="Show message">
+      <div onClick={handleShow} className="hover:opacity-80 cursor-pointer" title="Show sketch">
         <Eye size={16} />
       </div>
-      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer" title="Remove message">
+      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer" title="Remove sketch">
         <Trash size={16} />
       </div>
     </div>

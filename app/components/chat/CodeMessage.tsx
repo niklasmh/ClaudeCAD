@@ -1,5 +1,5 @@
 import { LLMCodeMessage, modelNames } from "@/app/types/llm";
-import { Eye, Pencil, Play, Save, Trash } from "lucide-react";
+import { Eye, EyeOff, Pencil, Play, Save, Trash } from "lucide-react";
 import { useState } from "react";
 import { CodeEditor } from "../editor/Editor";
 
@@ -24,12 +24,22 @@ export const CodeMessage = ({ message, onChange, onRun, onDelete }: Props) => {
     onChange({ ...currentMessage, hidden: false });
   };
 
+  const handleHide = () => {
+    setCurrentMessage({ ...currentMessage, hidden: true });
+    onChange({ ...currentMessage, hidden: true });
+  };
+
   const tools = (
     <div
       className={`absolute group-hover:visible invisible top-0 bottom-0 flex flex-row items-center mx-3 gap-2 opacity-30 ${
         isUser ? "right-full flex-row-reverse" : "left-full"
       }`}
     >
+      {message.hidden === false && (
+        <div onClick={handleHide} className="hover:opacity-80 cursor-pointer" title="Hide code">
+          <EyeOff size={16} />
+        </div>
+      )}
       <div onClick={() => onRun(currentMessage.text)} className="hover:opacity-80 cursor-pointer">
         <Play size={16} />
       </div>
@@ -45,10 +55,10 @@ export const CodeMessage = ({ message, onChange, onRun, onDelete }: Props) => {
         isUser ? "right-full flex-row-reverse" : "left-full"
       }`}
     >
-      <div onClick={handleShow} className="hover:opacity-80 cursor-pointer" title="Show message">
+      <div onClick={handleShow} className="hover:opacity-80 cursor-pointer" title="Show code">
         <Eye size={16} />
       </div>
-      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer" title="Remove message">
+      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer" title="Remove code">
         <Trash size={16} />
       </div>
     </div>

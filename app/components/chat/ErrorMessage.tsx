@@ -1,5 +1,5 @@
 import { LLMErrorMessage } from "@/app/types/llm";
-import { BugPlay, Eye, Trash } from "lucide-react";
+import { BugPlay, Eye, EyeOff, Trash } from "lucide-react";
 import { useState } from "react";
 
 type Props = {
@@ -20,12 +20,21 @@ export const ErrorMessage = ({ message, onFix, onDelete }: Props) => {
     setCurrentMessage({ ...currentMessage, hidden: false });
   };
 
+  const handleHide = () => {
+    setCurrentMessage({ ...currentMessage, hidden: true });
+  };
+
   const tools = (
     <div
       className={`absolute group-hover:visible invisible top-0 bottom-0 flex flex-row items-center mx-3 gap-2 opacity-30 ${
         isUser ? "right-full flex-row-reverse" : "left-full"
       }`}
     >
+      {message.hidden === false && (
+        <div onClick={handleHide} className="hover:opacity-80 cursor-pointer" title="Hide error message">
+          <EyeOff size={16} />
+        </div>
+      )}
       <div onClick={onFix} className="hover:opacity-80 cursor-pointer" title="Fix the bug">
         <BugPlay size={16} />
       </div>
@@ -41,10 +50,10 @@ export const ErrorMessage = ({ message, onFix, onDelete }: Props) => {
         isUser ? "right-full flex-row-reverse" : "left-full"
       }`}
     >
-      <div onClick={handleShow} className="hover:opacity-80 cursor-pointer" title="Show message">
+      <div onClick={handleShow} className="hover:opacity-80 cursor-pointer" title="Show error message">
         <Eye size={16} />
       </div>
-      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer" title="Remove message">
+      <div onClick={onDelete} className="hover:text-red-300 cursor-pointer" title="Remove error message">
         <Trash size={16} />
       </div>
     </div>
