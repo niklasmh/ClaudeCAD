@@ -63,17 +63,19 @@ export const ErrorMessage = ({ message, onFix, onDelete }: Props) => {
     <div className={`chat group ${isUser ? "chat-end pl-12" : "chat-start pr-12"}`}>
       <div className="chat-header">An error message</div>
       <div className={`chat-bubble relative w-full p-3 prose ${isUser ? "bg-[#2a323c88]" : ""}`}>
-        <pre className="m-0">
-          <code className="w-full whitespace-pre-wrap text-red-400">{message.text}</code>
-        </pre>
-        {message.hidden && (
+        {!currentMessage.hidden && (
+          <pre className="m-0">
+            <code className="w-full whitespace-pre-wrap text-red-400">{currentMessage.text}</code>
+          </pre>
+        )}
+        {currentMessage.hidden && (
           <div className="text-gray-400">
-            <i>{message.hiddenText || "The code got an error"}</i>
+            <i>{currentMessage.hiddenText || "The code got an error"}</i>
           </div>
         )}
-        {message.hidden ? hidden : tools}
+        {currentMessage.hidden ? hidden : tools}
       </div>
-      <div className="chat-footer opacity-50">Sent {new Date(message.date).toLocaleString()}</div>
+      <div className="chat-footer opacity-50">Sent {new Date(currentMessage.date).toLocaleString()}</div>
     </div>
   );
 };
