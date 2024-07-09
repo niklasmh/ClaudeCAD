@@ -165,6 +165,18 @@ export const Chat = () => {
             }
             textWithCode = (await llmConnector[model](buildMessageHistory(filteredMessages, "fix-error"))) as string;
           }
+          if (messages[messages.length - 1].type !== "error") {
+            const assistantMessage: LLMTextMessage = {
+              role: "assistant",
+              type: "text",
+              label: "assistant-no-code",
+              text: textWithCode,
+              model,
+              date: new Date().toISOString(),
+            };
+            filteredMessages.push(assistantMessage);
+            setMessages(filteredMessages);
+          }
         } else {
           const messages = runCodeFromTextWithCode(textWithCode);
           filteredMessages.push(...messages);
