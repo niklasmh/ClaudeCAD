@@ -170,7 +170,7 @@ export const Chat = () => {
               role: "assistant",
               type: "text",
               label: "assistant-no-code",
-              text: textWithCode,
+              text: "I'm sorry, I couldn't fix the error after 4 attempts. You may want to try again with a different description or sketch.",
               model,
               date: new Date().toISOString(),
             };
@@ -369,6 +369,13 @@ export const Chat = () => {
                     onRerun={() => onRerun(index)}
                   />
                 );
+
+                if (prevMessage?.type === "code" && group.type === "fixCode") {
+                  history.pop();
+                  history.push(<MessageGroup key={"group" + index} type={"fixCode"} messages={group.messages} />);
+                  group.type = null;
+                  group.messages = [];
+                }
               }
 
               if (message.type === "code") {

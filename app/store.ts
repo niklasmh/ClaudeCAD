@@ -34,7 +34,7 @@ export const useAppStore = create<AppState>((set) => ({
   model: defaultModel,
   projectName: "",
   autoRetry: true,
-  maxRetryCount: 3,
+  maxRetryCount: 4,
   apiKey: receiveFromPersistentStore<string>("anthropic_api_key", ""),
   setTextInput: (textInput: string) => set({ textInput }),
   setImageInput: (imageInput: string) => set({ imageInput }),
