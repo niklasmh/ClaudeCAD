@@ -1,5 +1,5 @@
 import { LLMImageMessage, modelNames } from "@/app/types/llm";
-import { Eye, EyeOff, Pencil, RefreshCw, Save, Trash } from "lucide-react";
+import { Eye, EyeOff, Pencil, RefreshCw, Save, Trash, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
@@ -28,6 +28,11 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
     setEdit(false);
     const image = await getImageFromCanvas(drawingCanvasRef.current);
     onChange({ ...message, image });
+  };
+
+  const handleCancelEditButtonClick = () => {
+    setEdit(false);
+    onChange({ ...message });
   };
 
   const handleClearEditButtonClick = () => {
@@ -79,12 +84,17 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
           <Save size={16} />
         </div>
       )}
+      {edit && (
+        <div onClick={handleCancelEditButtonClick} className="hover:text-red-300 cursor-pointer" title="Cancel edit">
+          <X size={16} />
+        </div>
+      )}
       {message.hidden === false && (
         <div onClick={handleHide} className="hover:opacity-80 cursor-pointer" title="Hide sketch">
           <EyeOff size={16} />
         </div>
       )}
-      {isUser && (
+      {isUser && !edit && (
         <div onClick={onRerun} className="hover:opacity-80 cursor-pointer">
           <RefreshCw size={16} />
         </div>

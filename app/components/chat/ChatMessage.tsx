@@ -1,5 +1,5 @@
 import { LLMTextMessage, modelNames } from "@/app/types/llm";
-import { Eye, EyeOff, Pencil, RefreshCw, Save, Trash } from "lucide-react";
+import { Eye, EyeOff, Pencil, RefreshCw, Save, Trash, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -24,6 +24,12 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
   const handleSaveEditButtonClick = () => {
     setEdit(false);
     onChange(currentMessage);
+  };
+
+  const handleCancelEditButtonClick = () => {
+    setEdit(false);
+    setCurrentMessage({ ...currentMessage, text: message.text });
+    onChange({ ...currentMessage, text: message.text });
   };
 
   const handleShow = () => {
@@ -76,8 +82,13 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
         </div>
       )}
       {edit && (
-        <div onClick={handleSaveEditButtonClick} className="hover:opacity-80 cursor-pointer" title="Save message">
+        <div onClick={handleSaveEditButtonClick} className="hover:text-green-300 cursor-pointer" title="Save message">
           <Save size={16} />
+        </div>
+      )}
+      {edit && (
+        <div onClick={handleCancelEditButtonClick} className="hover:text-red-300 cursor-pointer" title="Cancel edit">
+          <X size={16} />
         </div>
       )}
       {message.hidden === false && (
@@ -85,7 +96,7 @@ export const ChatMessage = ({ message, onChange, onRerun, onDelete }: Props) => 
           <EyeOff size={16} />
         </div>
       )}
-      {isUser && (
+      {isUser && !edit && (
         <div onClick={onRerun} className="hover:opacity-80 cursor-pointer" title="Rerun message">
           <RefreshCw size={16} />
         </div>
