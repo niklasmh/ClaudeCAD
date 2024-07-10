@@ -14,7 +14,6 @@ type Props = {
 
 export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) => {
   const [edit, setEdit] = useState<boolean>(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(message.image);
 
@@ -28,6 +27,7 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
     setEdit(false);
     const image = await getImageFromCanvas(drawingCanvasRef.current);
     onChange({ ...message, image });
+    setBackgroundImage(image);
   };
 
   const handleCancelEditButtonClick = () => {
@@ -48,31 +48,11 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
     onChange({ ...message, hidden: true });
   };
 
-  const resizeTextarea = () => {
-    const el = textareaRef.current;
-
-    if (el) {
-      if (el.value.includes("\n")) {
-        el.style.height = "auto";
-        el.style.height = `${el.scrollHeight}px`;
-      } else {
-        el.style.height = "auto";
-        el.style.height = "48px";
-      }
-    }
-  };
-
-  useEffect(() => {
-    setTimeout(() => {
-      resizeTextarea();
-    }, 100);
-  }, [edit]);
-
   const tools = (
     <div
       className={`absolute group-hover:visible invisible top-0 bottom-0 flex flex-row items-center mx-3 gap-2 opacity-30 ${
         isUser ? "right-full flex-row-reverse" : "left-full"
-      }`}
+      } ${edit ? "!visible" : ""}`}
     >
       {message.editable !== false && !edit && (
         <div onClick={handleOpenEditButtonClick} className="hover:opacity-80 cursor-pointer">
