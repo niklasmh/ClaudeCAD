@@ -18,7 +18,7 @@ import { extractError } from "@/app/helpers/extractError";
 import { ModelMessage } from "./ModelMessage";
 import { ErrorMessage } from "./ErrorMessage";
 import { mergeImages } from "@/app/helpers/mergeImages";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, Trash } from "lucide-react";
 import { MessageGroup } from "./MessageGroup";
 
 export const Chat = () => {
@@ -39,7 +39,7 @@ export const Chat = () => {
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    anchorRef.current?.scrollIntoView({ behavior: "smooth" });
+    anchorRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   };
 
   const scrollToBottomDelayed = (delay = 100) => {
@@ -326,6 +326,10 @@ export const Chat = () => {
     }
   };
 
+  const handleResetChatButton = () => {
+    window.location.reload();
+  };
+
   const updateMessage = (message: LLMMessage, index: number) => {
     const newMessages = [...messages];
     newMessages[index] = message;
@@ -347,8 +351,12 @@ export const Chat = () => {
   };
 
   return (
-    <div className="w-full flex flex-col justify-center">
-      <div className="flex flex-col max-h-full overflow-y-auto overflow-x-hidden">
+    <div className="w-full flex flex-col">
+      <div
+        className="flex flex-col justify-end overflow-y-auto overflow-x-hidden"
+        style={{ minHeight: messages.length > 0 ? "calc(100vh - 175px)" : "auto" }}
+      >
+        <div className="flex-1" />
         {
           messages.reduce(
             (acc, message, index) => {
@@ -460,7 +468,12 @@ export const Chat = () => {
             }
           ).history
         }
-        <div ref={anchorRef} />
+        {messages.length !== 0 && (
+          <button className="btn btn-error self-center mt-10" onClick={handleResetChatButton}>
+            Reset chat <Trash size={16} />
+          </button>
+        )}
+        <div ref={anchorRef} className="mt-8" />
       </div>
       <div
         className="fixed bottom-0 left-0 right-0 bg-base-100 z-20 pt-4 pb-6 px-4"
