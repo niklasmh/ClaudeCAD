@@ -1,5 +1,5 @@
 import { LLMImageMessage, modelNames } from "@/app/types/llm";
-import { Eye, EyeOff, Pencil, RefreshCw, Save, Trash, X } from "lucide-react";
+import { Eye, EyeOff, Pencil, Redo, RefreshCw, Save, Trash, Undo, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
@@ -40,6 +40,14 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
     setBackgroundImage(undefined);
   };
 
+  const handleUndoClick = () => {
+    drawingCanvasRef.current?.undo();
+  };
+
+  const handleRedoClick = () => {
+    drawingCanvasRef.current?.redo();
+  };
+
   const handleShow = () => {
     onChange({ ...message, hidden: false });
   };
@@ -57,6 +65,16 @@ export const SketchMessage = ({ message, onChange, onRerun, onDelete }: Props) =
       {message.editable !== false && !edit && (
         <div onClick={handleOpenEditButtonClick} className="hover:opacity-80 cursor-pointer">
           <Pencil size={16} />
+        </div>
+      )}
+      {edit && (
+        <div onClick={handleRedoClick} className="hover:opacity-80 cursor-pointer select-none">
+          <Redo size={16} />
+        </div>
+      )}
+      {edit && (
+        <div onClick={handleUndoClick} className="hover:opacity-80 cursor-pointer select-none">
+          <Undo size={16} />
         </div>
       )}
       {edit && (
