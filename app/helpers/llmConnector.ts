@@ -30,7 +30,6 @@ const anthropicConnector = async (model: string, messages: LLMMessage[]): Promis
     method: "POST",
     body: JSON.stringify({
       model: mapModel(model),
-      //dummyType: "text-and-image",
       temperature: 0,
       system: getSystemMessage(messages),
       messages: groupMessagesByRole(messages.map(mapMessage)),

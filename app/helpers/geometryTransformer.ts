@@ -5,6 +5,7 @@ import { Vector3, Matrix4 } from "three";
 
 export const geometryTransformer = (geometry: Geom3[]): Geometry[] => {
   const entities = entitiesFromSolids({}, ...geometry);
+
   return entities.map((entity) => {
     let colors;
     if (entity.geometry.color) {
@@ -16,6 +17,7 @@ export const geometryTransformer = (geometry: Geom3[]): Geometry[] => {
     } else {
       colors = new Float32Array((entity.geometry as any).colors.flat());
     }
+
     const indices = new Uint32Array((entity.geometry as any).indices.flat());
     const normals = new Float32Array(
       (entity.geometry as any).normals.map((n: Float32Array) => [n[0], n[1], n[2]]).flat()

@@ -1,41 +1,14 @@
-import { booleanExampleString } from "@/app/examples/boolean";
 import Anthropic from "@anthropic-ai/sdk";
-
-const getDummyResponseText = (dummyType: string) => {
-  switch (dummyType) {
-    case "text-and-image":
-      return (
-        "You sent a text and an image, here is code:\n\n```javascript\n" +
-        booleanExampleString +
-        "\n```\n\nAnd here is a text response"
-      );
-    case "fixError":
-      return "I fixed the error";
-    default:
-      return "Dummy response";
-  }
-};
 
 export async function POST(req: Request) {
   const {
     model,
-    dummyType = null,
     temperature = 0,
     system = "",
     messages,
     max_tokens = 1_000,
     anthropic_api_key = "",
   } = await req.json();
-
-  if (dummyType !== null) {
-    return Response.json({
-      content: [
-        {
-          text: getDummyResponseText(dummyType),
-        },
-      ],
-    });
-  }
 
   if (!anthropic_api_key) {
     return Response.json(
