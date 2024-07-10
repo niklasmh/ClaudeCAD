@@ -55,4 +55,7 @@ However, if it cannot solve the error, you can just say try again, and it will t
 Other features:
 
 - Using normal maps to make Claude understand the model from different angles.
-- You can use voice to write in the input fields, making it possible to use it on a mobile phone with ease.
+- You can use voice to write in the input fields, making it easier to use it on a mobile phone.
+- Download an .stl-file of any of the models that can be printed out using a 3D printer.
+- Use different colors in the drawings to enable adding measurements and other notes about the model.
+  - E.g. add a green line and say it is 10cm long.
