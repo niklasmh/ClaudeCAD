@@ -21,6 +21,10 @@
 
 Link to [demo](https://claudecad.com). **NB! The demo requires an Anthropic API key.**
 
+Or scan this QR code to use it on your mobile device:
+
+[![QR code](qr-code.png)](https://claudecad.com)
+
 ## Run locally
 
 ```bash
