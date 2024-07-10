@@ -17,7 +17,11 @@
   <img src="demo-text-request.gif" width="200" />
 </div>
 
-## Run
+## Try it out
+
+Link to [demo](https://claudecad.com). **Requires an Anthropic API key.**
+
+## Run locally
 
 ```bash
 npm install # Install dependencies
