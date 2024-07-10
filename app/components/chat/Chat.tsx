@@ -191,6 +191,7 @@ export const Chat = () => {
             const messages = runCodeFromTextWithCode(textWithCode, model);
             filteredMessages.push(...messages);
             setMessages(filteredMessages);
+            forceUpdateUI();
             scrollToBottomDelayed();
           }
         } catch (e) {
@@ -207,6 +208,8 @@ export const Chat = () => {
 
           filteredMessages.push(assistantMessage);
           setMessages(filteredMessages);
+          forceUpdateUI();
+          scrollToBottomDelayed();
         }
 
         setTextInput("");
@@ -220,6 +223,7 @@ export const Chat = () => {
         if (imageInput) setImageInput(imageInput);
       }
 
+      forceUpdateUI();
       scrollToBottomDelayed();
       setSendingMessage(false);
     },
