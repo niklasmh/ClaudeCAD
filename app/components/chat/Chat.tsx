@@ -4,7 +4,7 @@ import * as jscad from "@jscad/modeling";
 import { llmConnector } from "@/app/helpers/llmConnector";
 import { useAppStore } from "@/app/store";
 import { LLMCodeMessage, LLMErrorMessage, LLMMessage, LLMModelMessage, LLMTextMessage } from "@/app/types/llm";
-import { KeyboardEvent, ReactNode, useRef, useState } from "react";
+import { KeyboardEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { CodeMessage } from "./CodeMessage";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
@@ -23,6 +23,8 @@ import { MessageGroup } from "./MessageGroup";
 
 export const Chat = () => {
   const [messages, setMessages] = useState<LLMMessage[]>([]);
+  const [history, setHistory] = useState<ReactNode[]>([]);
+  const [updateUI, setUpdateUI] = useState<string>("");
   const error = useAppStore((state) => state.error);
   const sendingMessage = useAppStore((state) => state.sendingMessage);
   const textInput = useAppStore((state) => state.textInput);
@@ -46,6 +48,10 @@ export const Chat = () => {
     setTimeout(() => {
       scrollToBottom();
     }, delay);
+  };
+
+  const forceUpdateUI = () => {
+    setUpdateUI(new Date().toISOString());
   };
 
   const sendMessage = async ({
@@ -159,6 +165,7 @@ export const Chat = () => {
             const messages = runCodeFromTextWithCode(textWithCode);
             filteredMessages.push(...messages);
             setMessages(filteredMessages);
+            forceUpdateUI();
             if (filteredMessages[filteredMessages.length - 1].type !== "error") {
               break;
             }
@@ -175,6 +182,7 @@ export const Chat = () => {
             };
             filteredMessages.push(assistantMessage);
             setMessages(filteredMessages);
+            forceUpdateUI();
           }
         } else {
           const messages = runCodeFromTextWithCode(textWithCode);
@@ -256,7 +264,6 @@ export const Chat = () => {
       return {
         type: "error",
         role: "user",
-        hidden: true,
         text: error,
         date: new Date().toISOString(),
       };
@@ -350,6 +357,121 @@ export const Chat = () => {
     sendMessage({ codeInput, sendFromIndex: index - 1 });
   };
 
+  useEffect(() => {
+    const history: ReactNode[] = messages.reduce(
+      (acc, message, index) => {
+        const history = [...acc.history];
+        const prevMessage = { ...acc.prevMessage };
+        const group = { ...acc.group };
+
+        let messageElement = null;
+
+        if (message.type === "text") {
+          messageElement = (
+            <ChatMessage
+              key={message.type + index}
+              message={message}
+              onChange={(message) => updateMessage(message, index)}
+              onDelete={() => deleteMessage(index)}
+              onRerun={() => onRerun(index)}
+            />
+          );
+
+          if (prevMessage?.type === "error" && group.type === "fixCode") {
+            history.pop();
+            history.push(<MessageGroup key={"group" + index} type={"fixCode"} messages={group.messages} />);
+            group.type = null;
+            group.messages = [];
+          }
+        }
+
+        if (message.type === "code") {
+          messageElement = (
+            <CodeMessage
+              key={message.type + index}
+              message={message}
+              onChange={(message) => updateMessage(message, index)}
+              onDelete={() => deleteMessage(index)}
+              onRun={(code) => onRunCode(code, index)}
+            />
+          );
+        }
+
+        if (message.type === "image") {
+          messageElement = (
+            <SketchMessage
+              key={message.type + index}
+              message={message}
+              onChange={(message) => updateMessage(message, index)}
+              onDelete={() => deleteMessage(index)}
+              onRerun={() => onRerun(index)}
+            />
+          );
+        }
+
+        if (message.type === "model") {
+          messageElement = (
+            <ModelMessage
+              key={message.type + index}
+              message={message}
+              onSketch={(sketch, modelImage, modelNormalMapImages, request) =>
+                applyRequestToModel(sketch, modelImage, modelNormalMapImages, request, index)
+              }
+              onDelete={() => deleteMessage(index)}
+            />
+          );
+
+          if (prevMessage?.type === "code" && group.type === "fixCode") {
+            history.pop();
+            history.push(<MessageGroup key={"group" + index} type={"fixCode"} messages={group.messages} />);
+            group.type = null;
+            group.messages = [];
+          }
+        }
+
+        if (message.type === "error") {
+          messageElement = (
+            <ErrorMessage
+              key={message.type + index}
+              message={message}
+              onFix={() => sendMessage({ sendFromIndex: index })}
+              onDelete={() => deleteMessage(index)}
+            />
+          );
+
+          if (prevMessage?.type === "code" && group.type === null) {
+            group.type = "fixCode";
+            group.messages.push(acc.prevMessageElement);
+          }
+        }
+
+        if (group.type) {
+          group.messages.push(messageElement);
+          history.pop();
+          history.push(<MessageGroup key="group" type={group.type} messages={group.messages} loading />);
+        } else {
+          history.push(messageElement);
+        }
+
+        return { history, prevMessage: message, prevMessageElement: messageElement, group };
+      },
+      {
+        history: [],
+        prevMessage: messages[0],
+        prevMessageElement: null,
+        group: { type: null, messages: [] },
+      } as {
+        history: ReactNode[];
+        prevMessage: LLMMessage;
+        prevMessageElement: ReactNode;
+        group: { type: "fixCode" | null; messages: ReactNode[] };
+      }
+    ).history;
+    console.log(history.map((h: any) => h.key));
+    setHistory(history);
+  }, [messages, updateUI]);
+  console.log(messages);
+
   return (
     <div className="w-full flex flex-col">
       <div
@@ -357,117 +479,7 @@ export const Chat = () => {
         style={{ minHeight: messages.length > 0 ? "calc(100vh - 175px)" : "auto" }}
       >
         <div className="flex-1" />
-        {
-          messages.reduce(
-            (acc, message, index) => {
-              const history = [...acc.history];
-              const prevMessage = { ...acc.prevMessage };
-              const group = { ...acc.group };
-
-              let messageElement = null;
-
-              if (message.type === "text") {
-                messageElement = (
-                  <ChatMessage
-                    key={message.type + index}
-                    message={message}
-                    onChange={(message) => updateMessage(message, index)}
-                    onDelete={() => deleteMessage(index)}
-                    onRerun={() => onRerun(index)}
-                  />
-                );
-
-                if (prevMessage?.type === "code" && group.type === "fixCode") {
-                  history.pop();
-                  history.push(<MessageGroup key={"group" + index} type={"fixCode"} messages={group.messages} />);
-                  group.type = null;
-                  group.messages = [];
-                }
-              }
-
-              if (message.type === "code") {
-                messageElement = (
-                  <CodeMessage
-                    key={message.type + index}
-                    message={message}
-                    onChange={(message) => updateMessage(message, index)}
-                    onDelete={() => deleteMessage(index)}
-                    onRun={(code) => onRunCode(code, index)}
-                  />
-                );
-              }
-
-              if (message.type === "image") {
-                messageElement = (
-                  <SketchMessage
-                    key={message.type + index}
-                    message={message}
-                    onChange={(message) => updateMessage(message, index)}
-                    onDelete={() => deleteMessage(index)}
-                    onRerun={() => onRerun(index)}
-                  />
-                );
-              }
-
-              if (message.type === "model") {
-                messageElement = (
-                  <ModelMessage
-                    key={message.type + index}
-                    message={message}
-                    onSketch={(sketch, modelImage, modelNormalMapImages, request) =>
-                      applyRequestToModel(sketch, modelImage, modelNormalMapImages, request, index)
-                    }
-                    onDelete={() => deleteMessage(index)}
-                  />
-                );
-
-                if (prevMessage?.type === "code" && group.type === "fixCode") {
-                  history.pop();
-                  history.push(<MessageGroup key={"group" + index} type={"fixCode"} messages={group.messages} />);
-                  group.type = null;
-                  group.messages = [];
-                }
-              }
-
-              if (message.type === "error") {
-                messageElement = (
-                  <ErrorMessage
-                    key={message.type + index}
-                    message={message}
-                    onFix={() => sendMessage({ sendFromIndex: index })}
-                    onDelete={() => deleteMessage(index)}
-                  />
-                );
-
-                if (prevMessage?.type === "code" && group.type === null) {
-                  group.type = "fixCode";
-                  group.messages.push(acc.prevMessageElement);
-                }
-              }
-
-              if (group.type) {
-                group.messages.push(messageElement);
-                history.pop();
-                history.push(<MessageGroup key="group" type={group.type} messages={group.messages} loading />);
-              } else {
-                history.push(messageElement);
-              }
-
-              return { history, prevMessage: message, prevMessageElement: messageElement, group };
-            },
-            {
-              history: [],
-              prevMessage: messages[0],
-              prevMessageElement: null,
-              group: { type: null, messages: [] },
-            } as {
-              history: ReactNode[];
-              prevMessage: LLMMessage;
-              prevMessageElement: ReactNode;
-              group: { type: "fixCode" | null; messages: ReactNode[] };
-            }
-          ).history
-        }
+        {history}
         {messages.length !== 0 && (
           <button className="btn btn-error self-center mt-10" onClick={handleResetChatButton}>
             Reset chat <Trash size={16} />
