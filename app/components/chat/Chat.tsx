@@ -154,8 +154,18 @@ export const Chat = () => {
           codeInput ?? (await llmConnector[model](buildMessageHistory(filteredMessages, "generate-model")));
 
         if (typeof textWithCode === "object" && "error" in textWithCode) {
-          setError(textWithCode.error);
+          const assistantMessage: LLMTextMessage = {
+            role: "assistant",
+            type: "text",
+            label: "assistant-no-code",
+            text: "Got an unknown error from the server. Try again.",
+            model,
+            date: new Date().toISOString(),
+          };
+          filteredMessages.push(assistantMessage);
+          setMessages(filteredMessages);
           setSendingMessage(false);
+          forceUpdateUI();
           scrollToBottomDelayed();
           return;
         }
@@ -216,11 +226,20 @@ export const Chat = () => {
         setImageInput("");
       } catch (error) {
         if (error instanceof Error) {
-          setError(error.message);
+          const assistantMessage: LLMTextMessage = {
+            role: "assistant",
+            type: "text",
+            label: "assistant-no-code",
+            text: "Got an unknown error. Try again.",
+            model,
+            date: new Date().toISOString(),
+          };
+          filteredMessages.push(assistantMessage);
+          setMessages(filteredMessages);
+          forceUpdateUI();
+          scrollToBottomDelayed();
         }
         console.error(error);
-        if (textInput) setTextInput(textInput);
-        if (imageInput) setImageInput(imageInput);
       }
 
       forceUpdateUI();

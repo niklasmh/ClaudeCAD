@@ -26,7 +26,7 @@ const getAPIKey = (): string => {
 };
 
 const anthropicConnector = async (model: string, messages: LLMMessage[]): Promise<string | ErrorMessage> => {
-  const response = (await fetch("/api/claude", {
+  const response = fetch("/api/claude", {
     method: "POST",
     body: JSON.stringify({
       model: mapModel(model),
@@ -36,14 +36,15 @@ const anthropicConnector = async (model: string, messages: LLMMessage[]): Promis
       max_tokens: 1000,
       anthropic_api_key: getAPIKey(),
     }),
-  }).then((r) => r.json())) as Anthropic.Messages.Message | ErrorMessage;
+  });
   try {
-    if ("error" in response) {
-      return response;
+    const data = (await response.then((r) => r.json())) as Anthropic.Messages.Message | ErrorMessage;
+    if ("error" in data) {
+      return data;
     }
-    return (response.content[0] as any).text;
+    return (data.content[0] as any).text;
   } catch (e) {
-    return response as never as ErrorMessage;
+    return { error: await response.then((r) => r.text()) };
   }
 };
 
