@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { useAppStore } from "@/app/store";
 import { SendMessage } from "./Chat";
 import { CircleAlert } from "lucide-react";
+import { SpeechInput } from "./SpeechInput";
 
 type Props = {
   sendMessage: (options: SendMessage) => void;
@@ -85,6 +86,7 @@ export const ChatInput = ({ sendMessage, error, emptyChat }: Props) => {
           onKeyDown={handleKeyDown}
           onInput={handleInputChange}
         />
+        <SpeechInput />
         <button className="btn btn-primary" onClick={handleSendMessage} disabled={sendingMessage}>
           Send {sendingMessage && <span className="loading loading-spinner loading-sm"></span>}
         </button>
