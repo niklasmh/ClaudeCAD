@@ -1,5 +1,5 @@
 import { LLMCodeMessage, modelNames } from "@/app/types/llm";
-import { Eye, EyeOff, Pencil, Play, Save, Trash } from "lucide-react";
+import { Eye, EyeOff, Play, Trash } from "lucide-react";
 import { useState } from "react";
 import { CodeEditor } from "../editor/Editor";
 

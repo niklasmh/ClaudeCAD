@@ -1,6 +1,6 @@
 import { LLMImageMessage, modelNames } from "@/app/types/llm";
 import { Eye, EyeOff, Pencil, RefreshCw, Save, Trash, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
 import { getImageFromCanvas } from "@/app/helpers/extractImage";

@@ -108,7 +108,7 @@ const mapMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStream
       content: [],
     };
   } else {
-    throw new Error("Only text and image messages are supported");
+    throw new Error(`Unknown message type: ${(message as any).type}`);
   }
 };
 

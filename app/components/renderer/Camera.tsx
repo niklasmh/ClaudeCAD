@@ -1,6 +1,6 @@
 import { useThree } from "@react-three/fiber";
 import { OrbitControls, OrbitControlsChangeEvent } from "@react-three/drei";
-import { AxesHelper, Box3, Object3D, Object3DEventMap, Sphere, Vector3 } from "three";
+import { Box3, Object3D, Object3DEventMap, Sphere, Vector3 } from "three";
 import { useEffect, useRef } from "react";
 
 type Props = {
