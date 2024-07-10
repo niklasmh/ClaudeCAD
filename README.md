@@ -5,7 +5,7 @@
   <p>Your 3D print modeling assistant - making 3D modeling accessible to everyone.</p>
 </div>
 
-![Video demo](demo.mp4)
+<video src="demo.mp4" width="300" />
 
 ## Run
 
