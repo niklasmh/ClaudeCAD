@@ -477,6 +477,12 @@ export const Chat = () => {
         }}
       >
         <div className="flex flex-col gap-4 max-w-[800px] mx-auto">
+          {error && (
+            <div role="alert" className="alert">
+              <CircleAlert size={16} />
+              <span>{error}</span>
+            </div>
+          )}
           {messages.length === 0 && (
             <div className="text-center">
               <p className="text-lg">Draw and/or describe what you want to make.</p>
@@ -510,12 +516,6 @@ export const Chat = () => {
           </div>
         </div>
       </div>
-      {error && (
-        <div role="alert" className="alert">
-          <CircleAlert size={16} />
-          <span>{error}</span>
-        </div>
-      )}
     </div>
   );
 };
