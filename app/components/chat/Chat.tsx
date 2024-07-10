@@ -166,6 +166,7 @@ export const Chat = () => {
             filteredMessages.push(...messages);
             setMessages(filteredMessages);
             forceUpdateUI();
+            scrollToBottomDelayed();
             if (filteredMessages[filteredMessages.length - 1].type !== "error") {
               break;
             }
@@ -183,11 +184,13 @@ export const Chat = () => {
             filteredMessages.push(assistantMessage);
             setMessages(filteredMessages);
             forceUpdateUI();
+            scrollToBottomDelayed();
           }
         } else {
           const messages = runCodeFromTextWithCode(textWithCode);
           filteredMessages.push(...messages);
           setMessages(filteredMessages);
+          scrollToBottomDelayed();
         }
       } catch (e) {
         console.log(e);
@@ -467,10 +470,8 @@ export const Chat = () => {
         group: { type: "fixCode" | null; messages: ReactNode[] };
       }
     ).history;
-    console.log(history.map((h: any) => h.key));
     setHistory(history);
   }, [messages, updateUI]);
-  console.log(messages);
 
   return (
     <div className="w-full flex flex-col">
