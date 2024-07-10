@@ -1,39 +1,47 @@
-import { useAppStore } from "@/app/store";
 import { Mic } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 
-let timer: any;
+type Props = {
+  onChange: (transcript: string) => void;
+  className?: string;
+};
 
-export const SpeechInput = () => {
-  const setTextInput = useAppStore((state) => state.setTextInput);
-  const { interimTranscript, listening, resetTranscript } = useSpeechRecognition();
+export const SpeechInput = ({ onChange, className }: Props) => {
+  const { transcript, resetTranscript } = useSpeechRecognition({
+    clearTranscriptOnListen: false,
+  });
+  const [isListening, setIsListening] = useState(false);
+  const timer = useRef<any>();
 
   useEffect(() => {
-    setTextInput(interimTranscript);
-  }, [interimTranscript, setTextInput]);
+    if (isListening && transcript) onChange(transcript);
+  }, [isListening, transcript]);
 
   const toggleListening = () => {
-    if (listening) {
+    if (isListening) {
       SpeechRecognition.stopListening();
+      setIsListening(false);
     } else {
       resetTranscript();
       SpeechRecognition.startListening({ continuous: true, language: "en-US" });
+      setIsListening(true);
     }
   };
 
   useEffect(() => {
-    if (interimTranscript) {
-      clearTimeout(timer!);
-      timer = setTimeout(() => {
+    if (isListening && transcript) {
+      clearTimeout(timer.current!);
+      timer.current = setTimeout(() => {
         SpeechRecognition.stopListening();
+        setIsListening(false);
       }, 5000);
     }
-  }, [interimTranscript]);
+  }, [isListening, transcript]);
 
   return (
-    <button className={"btn btn-outline "} onClick={toggleListening}>
-      {listening ? <div className="loading loading-ball loading-xs" /> : <Mic size={16} />}
+    <button className={"btn btn-outline " + className} onClick={toggleListening}>
+      {isListening ? <div className="loading loading-ball loading-xs" /> : <Mic size={16} />}
     </button>
   );
 };

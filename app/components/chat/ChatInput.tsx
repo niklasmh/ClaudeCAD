@@ -86,7 +86,7 @@ export const ChatInput = ({ sendMessage, error, emptyChat }: Props) => {
           onKeyDown={handleKeyDown}
           onInput={handleInputChange}
         />
-        <SpeechInput />
+        <SpeechInput onChange={setTextInput} />
         <button className="btn btn-primary" onClick={handleSendMessage} disabled={sendingMessage}>
           Send {sendingMessage && <span className="loading loading-spinner loading-sm"></span>}
         </button>

@@ -9,6 +9,7 @@ import { Viewer } from "../renderer/Viewer";
 import { Vector3 } from "three";
 import { mergeImages } from "@/app/helpers/mergeImages";
 import { useAppStore } from "@/app/store";
+import { SpeechInput } from "./SpeechInput";
 
 type Props = {
   message: LLMModelMessage;
@@ -151,12 +152,15 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
           <Pen size={16} />
         </span>
       </label>
-      <textarea
-        value={request}
-        onChange={(e) => setRequest(e.target.value)}
-        className="textarea textarea-primary min-h-[72px] h-[72px]"
-        placeholder="E.g. Add hole through the top of the marked area."
-      />
+      <div className="relative w-full">
+        <textarea
+          value={request}
+          onChange={(e) => setRequest(e.target.value)}
+          className="textarea textarea-primary w-full min-h-[72px] h-[72px] pr-10"
+          placeholder="E.g. Add hole through the top of the marked area."
+        />
+        <SpeechInput onChange={setRequest} className="self-start btn-sm btn-square absolute top-2 right-2" />
+      </div>
       <div className="flex flex-row flex-wrap gap-2 items-center">
         <button onClick={() => handleSaveEditButtonClick()} className="btn btn-sm btn-success">
           Request change <Send size={16} />
