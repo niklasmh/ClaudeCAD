@@ -176,10 +176,10 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
           <button onClick={handleCutButtonClick} className="btn btn-sm btn-success" disabled={!isDirty}>
             Cut marked area <Scissors size={16} />
           </button>
-          <button onClick={handleUndoClick} className="btn btn-sm btn-outline">
+          <button onClick={handleUndoClick} className="btn btn-sm btn-square btn-outline">
             <Undo size={16} />
           </button>
-          <button onClick={handleRedoClick} className="btn btn-sm btn-outline">
+          <button onClick={handleRedoClick} className="btn btn-sm btn-square btn-outline">
             <Redo size={16} />
           </button>
         </div>
