@@ -5,7 +5,17 @@
   <p>Your 3D print modeling assistant - making 3D modeling accessible to everyone.</p>
 </div>
 
-<video src="demo.mp4" width="300" />
+<div align="center">
+  <img src="demo-sketch-input.gif" width="200" />
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  <img src="demo-sketch-request.gif" width="200" />
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  <img src="demo-text-request.gif" width="200" />
+</div>
 
 ## Run
 
