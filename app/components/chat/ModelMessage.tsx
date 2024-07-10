@@ -1,6 +1,20 @@
 import * as io from "@jscad/io";
 import { LLMModelMessage } from "@/app/types/llm";
-import { Download, Pen, Pencil, Rotate3D, Send, ThumbsDown, ThumbsUp, Trash } from "lucide-react";
+import {
+  Download,
+  Minus,
+  Pen,
+  Pencil,
+  Plus,
+  Redo,
+  Rotate3D,
+  Scissors,
+  Send,
+  ThumbsDown,
+  ThumbsUp,
+  Trash,
+  Undo,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { SketchInput } from "./SketchInput";
@@ -19,6 +33,7 @@ type Props = {
 
 export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
   const [edit, setEdit] = useState<boolean>(false);
+  const [isDirty, setIsDirty] = useState<boolean>(false);
   const [cameraPositionX, setCameraPositionX] = useState<number>(1);
   const [cameraPositionY, setCameraPositionY] = useState<number>(1);
   const [cameraPositionZ, setCameraPositionZ] = useState<number>(1);
@@ -79,8 +94,23 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
     handleSaveEditButtonClick("Almost there! Make it again.");
   };
 
+  const handleCutButtonClick = () => {
+    handleSaveEditButtonClick(
+      "Cut off the marked area of the model using a boolean operation. The cut should have the same shape as in the sketch, and go straight through."
+    );
+  };
+
   const handleClearEditButtonClick = () => {
     drawingCanvasRef.current?.clearCanvas();
+    setIsDirty(false);
+  };
+
+  const handleUndoClick = () => {
+    drawingCanvasRef.current?.undo();
+  };
+
+  const handleRedoClick = () => {
+    drawingCanvasRef.current?.redo();
   };
 
   const handleDownloadButtonClick = () => {
@@ -134,39 +164,53 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
       {!edit && (
         <div className="flex flex-row flex-wrap gap-2 items-center">
           <button onClick={handleNotCorrectButtonClick} className="btn btn-sm btn-error">
-            Not correct <ThumbsDown size={16} />
+            Far away <ThumbsDown size={16} />
           </button>
           <button onClick={handleCloseToGoodButtonClick} className="btn btn-sm btn-success">
-            Close to good <ThumbsUp size={16} />
+            Almost there <ThumbsUp size={16} />
           </button>
         </div>
       )}
-      <label className="flex flex-row gap-2 items-center cursor-pointer">
+      {edit && (
+        <div className="flex flex-row flex-wrap gap-2 items-center">
+          <button onClick={handleCutButtonClick} className="btn btn-sm btn-success" disabled={!isDirty}>
+            Cut marked area <Scissors size={16} />
+          </button>
+          <button onClick={handleUndoClick} className="btn btn-sm btn-outline">
+            <Undo size={16} />
+          </button>
+          <button onClick={handleRedoClick} className="btn btn-sm btn-outline">
+            <Redo size={16} />
+          </button>
+        </div>
+      )}
+      <label className="flex flex-row gap-2 items-center justify-center cursor-pointer">
         <span className="label-text flex flex-row gap-2 items-center">
           <Rotate3D size={16} />
           <span>Rotate</span>
         </span>
         <input type="checkbox" className="toggle" checked={edit} onChange={handleToggleEditButtonClick} />
         <span className="label-text flex flex-row gap-2 items-center">
-          <span>Sketch on model</span>
           <Pen size={16} />
+          <span>Sketch</span>
         </span>
       </label>
-      <div className="relative w-full">
+      <div className="relative w-full -mb-1">
         <textarea
           value={request}
           onChange={(e) => setRequest(e.target.value)}
-          className="textarea textarea-primary w-full min-h-[72px] h-[72px] pr-10"
+          className="textarea textarea-primary w-full min-h-[72px] h-[72px] pr-11"
           placeholder="E.g. Add hole through the top of the marked area."
         />
         <SpeechInput onChange={setRequest} className="self-start btn-sm btn-square absolute top-2 right-2" />
       </div>
-      <div className="flex flex-row flex-wrap gap-2 items-center">
-        <button onClick={() => handleSaveEditButtonClick()} className="btn btn-sm btn-success">
-          Request change <Send size={16} />
-        </button>
+      <div className="flex flex-row flex-wrap-reverse gap-2 items-center">
         <button onClick={handleDownloadButtonClick} className="btn btn-sm btn-primary">
-          Download <Download size={16} />
+          Download
+          <Download size={16} />
+        </button>
+        <button onClick={() => handleSaveEditButtonClick()} className="btn btn-sm btn-success">
+          Send request <Send size={16} />
         </button>
       </div>
     </div>
@@ -237,6 +281,9 @@ export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
             onClear={handleClearEditButtonClick}
             toggleEraser={drawingCanvasRef.current?.eraseMode}
             transparent
+            canvasProps={{
+              onStroke: () => setIsDirty(true),
+            }}
           />
         </div>
         {controls}
