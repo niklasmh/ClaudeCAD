@@ -5,6 +5,8 @@
   <p>Your 3D print modeling assistant - making 3D modeling accessible to everyone.</p>
 </div>
 
+![Video demo](demo.mp4)
+
 ## Run
 
 ```bash
