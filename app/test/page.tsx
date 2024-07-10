@@ -15,7 +15,7 @@ import { generateCode } from "../prompts/generateCode";
 import { fixCodeFromImage } from "../prompts/fixCodeFromImage";
 import { fixCodeFromError } from "../prompts/fixCodeFromError";
 import { extractCodeFromMessage } from "../helpers/extractCodeFromMessage";
-import { LLMModel } from "../types/llm";
+import { LLMMessage, LLMModel } from "../types/llm";
 import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
 
 const initialGeometries = geometryTransformer(booleanExample());
@@ -23,7 +23,6 @@ const model = LLMModel.CLAUDE_3_5;
 
 export default function Home() {
   const [geometries, setGeometries] = useState<Geometry[]>([]);
-  const [updateCameraID, setUpdateCameraID] = useState<string>("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
@@ -41,10 +40,17 @@ export default function Home() {
     setError(null);
 
     try {
-      let message = "";
+      let message: any = "";
       if (type === "newCode") {
         message = await llmConnector[model]([
-          { type: "text", text: generateCode(basePrompt), role: "user", model, date: new Date().toISOString() },
+          {
+            type: "text",
+            text: generateCode(),
+            role: "user",
+            model,
+            date: new Date().toISOString(),
+            label: "description",
+          },
         ]);
       } else if (type === "fixWithImage") {
         const image = await mergeCanvas();
@@ -52,19 +58,34 @@ export default function Home() {
         if (!image) return;
 
         message = await llmConnector[model]([
-          { type: "text", text: "Screenshot of JSCAD model:", role: "user", model, date: new Date().toISOString() },
-          { type: "image", image, role: "user", model, date: new Date().toISOString() },
+          {
+            type: "text",
+            text: "Screenshot of JSCAD model:",
+            role: "user",
+            model,
+            date: new Date().toISOString(),
+            label: "description",
+          },
+          { type: "image", image, role: "user", model, date: new Date().toISOString(), label: "model-with-sketch" },
           {
             type: "text",
             text: fixCodeFromImage(basePrompt, prompt, code),
             role: "user",
+            label: "description",
             model,
             date: new Date().toISOString(),
           },
         ]);
       } else if (type === "fixWithError" && error) {
         message = await llmConnector[model]([
-          { type: "text", text: fixCodeFromError(code, error), role: "user", model, date: new Date().toISOString() },
+          {
+            type: "text",
+            text: fixCodeFromError(code, error),
+            role: "user",
+            model,
+            date: new Date().toISOString(),
+            label: "description",
+          },
         ]);
       }
 
@@ -89,10 +110,6 @@ export default function Home() {
       setGeometries(geometries);
       setShowDrawing(false);
       drawingCanvasRef.current?.clearCanvas();
-
-      setTimeout(() => {
-        setUpdateCameraID(Math.random().toString(36).substring(7));
-      }, 100);
     } catch (e: any) {
       const details = extractError(e);
       let error = `${details.type}: ${details.message}`;
@@ -189,7 +206,7 @@ export default function Home() {
         </div>
 
         <div className="relative" style={{ width: 256, height: 256 }}>
-          <Viewer geometries={geometries} updateID={updateCameraID} />
+          <Viewer geometries={geometries} />
           <ReactSketchCanvas
             ref={drawingCanvasRef}
             width="256px"

@@ -18,7 +18,6 @@ type Props = {
 
 export const ModelMessage = ({ message, onSketch, onDelete }: Props) => {
   const [edit, setEdit] = useState<boolean>(false);
-  const [cameraPosition, setCameraPosition] = useState<Vector3>(new Vector3(1, 1, 1));
   const [cameraPositionX, setCameraPositionX] = useState<number>(1);
   const [cameraPositionY, setCameraPositionY] = useState<number>(1);
   const [cameraPositionZ, setCameraPositionZ] = useState<number>(1);

@@ -33,7 +33,7 @@ export const CodeMessage = ({ message, onChange, onRun, onDelete }: Props) => {
     <div
       className={`absolute group-hover:visible invisible top-0 bottom-0 flex flex-row items-center mx-3 gap-2 opacity-30 ${
         isUser ? "right-full flex-row-reverse" : "left-full"
-      }`}
+      } ${message.hidden === false ? "!visible" : ""}`}
     >
       {message.hidden === false && (
         <div onClick={handleHide} className="hover:opacity-80 cursor-pointer" title="Hide code">

@@ -81,7 +81,9 @@ export const buildMessageHistory = (messages: LLMMessage[], type: "generate-mode
       messages.findLastIndex((m) => m.type === "model")
     );
     const codeMessage = messages.findLast((m) => m.type === "code") as LLMCodeMessage;
-    let newMessages = messages.slice(workingCodeMessageIndex).filter((m) => m.type !== "image" && m.type !== "model");
+    let newMessages: LLMMessage[] = messages
+      .slice(workingCodeMessageIndex)
+      .filter((m) => m.type !== "image" && m.type !== "model");
 
     if (codeMessage) {
       newMessages = modifyMessagesOfType<LLMCodeMessage>(

@@ -50,7 +50,7 @@ export const SketchInput = forwardRef(
 
     useEffect(() => {
       if (transparent) toggleEraser?.(eraser);
-    }, [eraser]);
+    }, [eraser, transparent, toggleEraser]);
 
     return (
       <div className={"flex flex-col gap-2 " + className}>
@@ -102,3 +102,5 @@ export const SketchInput = forwardRef(
     );
   }
 );
+
+SketchInput.displayName = "SketchInput";

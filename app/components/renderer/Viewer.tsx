@@ -70,3 +70,5 @@ export const Viewer = forwardRef(
     );
   }
 );
+
+Viewer.displayName = "Viewer";

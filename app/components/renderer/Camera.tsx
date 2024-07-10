@@ -57,7 +57,7 @@ export function Camera({
       controls.current.target.set(center.x, center.y, center.z);
       camera.updateProjectionMatrix();
     }
-  }, [objectToFit, cameraPosition, cameraPositionX, cameraPositionY, cameraPositionZ, zoom]);
+  }, [objectToFit, camera, cameraPosition, cameraPositionX, cameraPositionY, cameraPositionZ, zoom]);
 
   const sendCameraChange = (position: Vector3, center: Vector3, radius: number) => {
     const { x, y, z } = position;

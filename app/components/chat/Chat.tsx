@@ -3,8 +3,15 @@
 import * as jscad from "@jscad/modeling";
 import { llmConnector } from "@/app/helpers/llmConnector";
 import { useAppStore } from "@/app/store";
-import { LLMCodeMessage, LLMErrorMessage, LLMMessage, LLMModelMessage, LLMTextMessage } from "@/app/types/llm";
-import { KeyboardEvent, ReactNode, useEffect, useRef, useState } from "react";
+import {
+  LLMCodeMessage,
+  LLMErrorMessage,
+  LLMMessage,
+  LLMModel,
+  LLMModelMessage,
+  LLMTextMessage,
+} from "@/app/types/llm";
+import { KeyboardEvent, ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { CodeMessage } from "./CodeMessage";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
@@ -40,280 +47,243 @@ export const Chat = () => {
   const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    anchorRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  };
-
-  const scrollToBottomDelayed = (delay = 100) => {
+  const scrollToBottomDelayed = useCallback((delay = 100) => {
     setTimeout(() => {
-      scrollToBottom();
+      anchorRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }, delay);
-  };
+  }, []);
 
   const forceUpdateUI = () => {
     setUpdateUI(new Date().toISOString());
   };
 
-  const sendMessage = async ({
-    textInput,
-    imageInput,
-    hiddenInput,
-    modelNormalMapImages,
-    codeInput,
-    sendFromIndex = Infinity,
-    overrideMessages = messages,
-  }: {
-    textInput?: string;
-    imageInput?: string;
-    hiddenInput?: string;
-    modelNormalMapImages?: string;
-    codeInput?: string;
-    sendFromIndex?: number;
-    overrideMessages?: LLMMessage[];
-  } = {}) => {
-    setError(null);
-    setTextInput("");
-    setImageInput("");
-    setSendingMessage(true);
+  const sendMessage = useCallback(
+    async ({
+      textInput,
+      imageInput,
+      hiddenInput,
+      modelNormalMapImages,
+      codeInput,
+      sendFromIndex = Infinity,
+      overrideMessages = messages,
+    }: {
+      textInput?: string;
+      imageInput?: string;
+      hiddenInput?: string;
+      modelNormalMapImages?: string;
+      codeInput?: string;
+      sendFromIndex?: number;
+      overrideMessages?: LLMMessage[];
+    } = {}) => {
+      setError(null);
+      setTextInput("");
+      setImageInput("");
+      setSendingMessage(true);
 
-    const filteredMessages = [...overrideMessages].filter((_, index) => index <= sendFromIndex);
+      const filteredMessages = [...overrideMessages].filter((_, index) => index <= sendFromIndex);
 
-    if (hiddenInput) {
-      const userMessage: LLMMessage = {
-        role: "user",
-        type: "text",
-        label: "request",
-        text: hiddenInput,
-        hidden: true,
-        hiddenText: null,
-        model,
-        date: new Date().toISOString(),
-      };
-      filteredMessages.push(userMessage);
-    }
-
-    if (textInput) {
-      const userMessage: LLMMessage = {
-        role: "user",
-        type: "text",
-        label: "request",
-        text: textInput,
-        model,
-        date: new Date().toISOString(),
-      };
-      filteredMessages.push(userMessage);
-    }
-
-    if (overrideMessages.length === 0) {
-      const image = await getImageFromCanvas(drawingCanvasRef.current);
-      const userMessage: LLMMessage = {
-        role: "user",
-        type: "image",
-        label: "sketch",
-        image,
-        model,
-        date: new Date().toISOString(),
-      };
-      filteredMessages.push(userMessage);
-    }
-
-    if (imageInput) {
-      const userMessage: LLMMessage = {
-        role: "user",
-        type: "image",
-        label: "model-with-sketch",
-        image: imageInput,
-        model,
-        date: new Date().toISOString(),
-      };
-      filteredMessages.push(userMessage);
-    }
-
-    if (modelNormalMapImages) {
-      const normalMappingImagesMessage: LLMMessage = {
-        role: "user",
-        type: "image",
-        label: "normal-mapping",
-        image: modelNormalMapImages,
-        model,
-        date: new Date().toISOString(),
-        editable: false,
-        hidden: true,
-        hiddenText: "Hidden normal map representation of the model.",
-      };
-      filteredMessages.push(normalMappingImagesMessage);
-    }
-
-    setMessages(filteredMessages);
-    scrollToBottomDelayed();
-
-    try {
-      // Generate code if there is no code input
-      let textWithCode =
-        codeInput ?? (await llmConnector[model](buildMessageHistory(filteredMessages, "generate-model")));
-
-      if (typeof textWithCode === "object" && "error" in textWithCode) {
-        setError(textWithCode.error);
-        setSendingMessage(false);
-        scrollToBottomDelayed();
-        return;
-      }
-
-      try {
-        if (autoRetry) {
-          for (let i = 0; i < maxRetryCount; i++) {
-            const messages = runCodeFromTextWithCode(textWithCode);
-            filteredMessages.push(...messages);
-            setMessages(filteredMessages);
-            forceUpdateUI();
-            scrollToBottomDelayed();
-            if (filteredMessages[filteredMessages.length - 1].type !== "error") {
-              break;
-            }
-            textWithCode = (await llmConnector[model](buildMessageHistory(filteredMessages, "fix-error"))) as string;
-          }
-          if (filteredMessages[filteredMessages.length - 1].type === "error") {
-            const assistantMessage: LLMTextMessage = {
-              role: "assistant",
-              type: "text",
-              label: "assistant-no-code",
-              text: "I'm sorry, I couldn't fix the error after 4 attempts. You may want to try again with a different description or sketch.",
-              model,
-              date: new Date().toISOString(),
-            };
-            filteredMessages.push(assistantMessage);
-            setMessages(filteredMessages);
-            forceUpdateUI();
-            scrollToBottomDelayed();
-          }
-        } else {
-          const messages = runCodeFromTextWithCode(textWithCode);
-          filteredMessages.push(...messages);
-          setMessages(filteredMessages);
-          scrollToBottomDelayed();
-        }
-      } catch (e) {
-        console.log(e);
-
-        const assistantMessage: LLMTextMessage = {
-          role: "assistant",
+      if (hiddenInput) {
+        const userMessage: LLMMessage = {
+          role: "user",
           type: "text",
-          label: "assistant-no-code",
-          text: textWithCode,
+          label: "request",
+          text: hiddenInput,
+          hidden: true,
+          hiddenText: null,
           model,
           date: new Date().toISOString(),
         };
-
-        filteredMessages.push(assistantMessage);
-        setMessages(filteredMessages);
+        filteredMessages.push(userMessage);
       }
 
-      setTextInput("");
-      setImageInput("");
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
+      if (textInput) {
+        const userMessage: LLMMessage = {
+          role: "user",
+          type: "text",
+          label: "request",
+          text: textInput,
+          model,
+          date: new Date().toISOString(),
+        };
+        filteredMessages.push(userMessage);
       }
-      console.error(error);
-      if (textInput) setTextInput(textInput);
-      if (imageInput) setImageInput(imageInput);
-    }
 
-    scrollToBottomDelayed();
-    setSendingMessage(false);
-  };
+      if (overrideMessages.length === 0) {
+        const image = await getImageFromCanvas(drawingCanvasRef.current);
+        const userMessage: LLMMessage = {
+          role: "user",
+          type: "image",
+          label: "sketch",
+          image,
+          model,
+          date: new Date().toISOString(),
+        };
+        filteredMessages.push(userMessage);
+      }
 
-  const runCodeFromTextWithCode = (textWithCode: string) => {
-    const code = extractCodeFromMessage(textWithCode);
-    const messages = [];
+      if (imageInput) {
+        const userMessage: LLMMessage = {
+          role: "user",
+          type: "image",
+          label: "model-with-sketch",
+          image: imageInput,
+          model,
+          date: new Date().toISOString(),
+        };
+        filteredMessages.push(userMessage);
+      }
 
-    const assistantMessage: LLMCodeMessage = {
-      role: "assistant",
-      type: "code",
-      text: code,
-      model,
-      date: new Date().toISOString(),
-      hidden: true,
-    };
-    messages.push(assistantMessage);
+      if (modelNormalMapImages) {
+        const normalMappingImagesMessage: LLMMessage = {
+          role: "user",
+          type: "image",
+          label: "normal-mapping",
+          image: modelNormalMapImages,
+          model,
+          date: new Date().toISOString(),
+          editable: false,
+          hidden: true,
+          hiddenText: "Hidden normal map representation of the model.",
+        };
+        filteredMessages.push(normalMappingImagesMessage);
+      }
 
-    const runMessage = runCode(code);
-    messages.push(runMessage);
+      setMessages(filteredMessages);
+      scrollToBottomDelayed();
 
-    return messages;
-  };
+      try {
+        // Generate code if there is no code input
+        let textWithCode =
+          codeInput ?? (await llmConnector[model](buildMessageHistory(filteredMessages, "generate-model")));
 
-  const runCode = (code: string): LLMModelMessage | LLMErrorMessage => {
-    try {
-      const originalGeometries = new Function("jscad", code)(jscad);
-      const geometries = geometryTransformer(originalGeometries);
-      return {
-        type: "model",
-        role: "user",
-        geometries,
-        originalGeometries,
-        date: new Date().toISOString(),
-      };
-    } catch (e: any) {
-      const details = extractError(e);
-      let error = `${details.type}: ${details.message}`;
-      if (details.lineNumber) {
-        error += ` at ${details.lineNumber}`;
-        if (details.columnNumber) {
-          error += `:${details.columnNumber}`;
+        if (typeof textWithCode === "object" && "error" in textWithCode) {
+          setError(textWithCode.error);
+          setSendingMessage(false);
+          scrollToBottomDelayed();
+          return;
         }
+
+        try {
+          if (autoRetry) {
+            for (let i = 0; i < maxRetryCount; i++) {
+              const messages = runCodeFromTextWithCode(textWithCode, model);
+              filteredMessages.push(...messages);
+              setMessages(filteredMessages);
+              forceUpdateUI();
+              scrollToBottomDelayed();
+              if (filteredMessages[filteredMessages.length - 1].type !== "error") {
+                break;
+              }
+              textWithCode = (await llmConnector[model](buildMessageHistory(filteredMessages, "fix-error"))) as string;
+            }
+            if (filteredMessages[filteredMessages.length - 1].type === "error") {
+              const assistantMessage: LLMTextMessage = {
+                role: "assistant",
+                type: "text",
+                label: "assistant-no-code",
+                text: "I'm sorry, I couldn't fix the error after 4 attempts. You may want to try again with a different description or sketch.",
+                model,
+                date: new Date().toISOString(),
+              };
+              filteredMessages.push(assistantMessage);
+              setMessages(filteredMessages);
+              forceUpdateUI();
+              scrollToBottomDelayed();
+            }
+          } else {
+            const messages = runCodeFromTextWithCode(textWithCode, model);
+            filteredMessages.push(...messages);
+            setMessages(filteredMessages);
+            scrollToBottomDelayed();
+          }
+        } catch (e) {
+          console.log(e);
+
+          const assistantMessage: LLMTextMessage = {
+            role: "assistant",
+            type: "text",
+            label: "assistant-no-code",
+            text: textWithCode,
+            model,
+            date: new Date().toISOString(),
+          };
+
+          filteredMessages.push(assistantMessage);
+          setMessages(filteredMessages);
+        }
+
+        setTextInput("");
+        setImageInput("");
+      } catch (error) {
+        if (error instanceof Error) {
+          setError(error.message);
+        }
+        console.error(error);
+        if (textInput) setTextInput(textInput);
+        if (imageInput) setImageInput(imageInput);
       }
-      console.log(e);
-      return {
-        type: "error",
-        role: "user",
-        text: error,
-        date: new Date().toISOString(),
-      };
-    }
-  };
 
-  const applyRequestToModel = async (
-    sketch: string,
-    modelImage: string,
-    modelNormalMapImages: string,
-    request: string,
-    sendFromIndex: number
-  ) => {
-    let hiddenInput = "";
-    if (modelImage) {
-      hiddenInput = "This is an image of the rendered 3D model.";
-    }
-    if (sketch) {
-      hiddenInput = "This is a sketch of what I want to make.";
-    }
-    if (modelImage && sketch) {
-      hiddenInput = "This is an image of the rendered 3D model, with sketch applied.";
-    }
-    if (request) {
-      hiddenInput += " I want you to apply this request, in the next message, on the 3D model:";
-    }
-    const imageInput = (await mergeImages([modelImage, sketch])) || sketch || modelImage;
-    const modelNormalMapImagesWithSketch =
-      (await mergeImages([modelNormalMapImages, sketch], {
-        positions: [
-          { x: 0, y: 0 },
-          { x: 128, y: 128 },
-        ],
-        sizes: [
-          { width: 256, height: 256 },
-          { width: 128, height: 128 },
-        ],
-      })) || modelNormalMapImages;
+      scrollToBottomDelayed();
+      setSendingMessage(false);
+    },
+    [
+      setError,
+      setTextInput,
+      setImageInput,
+      setSendingMessage,
+      setMessages,
+      messages,
+      model,
+      autoRetry,
+      maxRetryCount,
+      scrollToBottomDelayed,
+    ]
+  );
 
-    sendMessage({
-      textInput: request,
-      imageInput,
-      hiddenInput,
-      modelNormalMapImages: modelNormalMapImagesWithSketch,
-      sendFromIndex,
-    });
-  };
+  const applyRequestToModel = useCallback(
+    async (
+      sketch: string,
+      modelImage: string,
+      modelNormalMapImages: string,
+      request: string,
+      sendFromIndex: number
+    ) => {
+      let hiddenInput = "";
+      if (modelImage) {
+        hiddenInput = "This is an image of the rendered 3D model.";
+      }
+      if (sketch) {
+        hiddenInput = "This is a sketch of what I want to make.";
+      }
+      if (modelImage && sketch) {
+        hiddenInput = "This is an image of the rendered 3D model, with sketch applied.";
+      }
+      if (request) {
+        hiddenInput += " I want you to apply this request, in the next message, on the 3D model:";
+      }
+      const imageInput = (await mergeImages([modelImage, sketch])) || sketch || modelImage;
+      const modelNormalMapImagesWithSketch =
+        (await mergeImages([modelNormalMapImages, sketch], {
+          positions: [
+            { x: 0, y: 0 },
+            { x: 128, y: 128 },
+          ],
+          sizes: [
+            { width: 256, height: 256 },
+            { width: 128, height: 128 },
+          ],
+        })) || modelNormalMapImages;
+
+      sendMessage({
+        textInput: request,
+        imageInput,
+        hiddenInput,
+        modelNormalMapImages: modelNormalMapImagesWithSketch,
+        sendFromIndex,
+      });
+    },
+    [sendMessage]
+  );
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -340,25 +310,37 @@ export const Chat = () => {
     window.location.reload();
   };
 
-  const updateMessage = (message: LLMMessage, index: number) => {
-    const newMessages = [...messages];
-    newMessages[index] = message;
-    setMessages(newMessages);
-  };
+  const updateMessage = useCallback(
+    (message: LLMMessage, index: number) => {
+      const newMessages = [...messages];
+      newMessages[index] = message;
+      setMessages(newMessages);
+    },
+    [messages]
+  );
 
-  const deleteMessage = (index: number) => {
-    const newMessages = [...messages];
-    newMessages.splice(index, 1);
-    setMessages(newMessages);
-  };
+  const deleteMessage = useCallback(
+    (index: number) => {
+      const newMessages = [...messages];
+      newMessages.splice(index, 1);
+      setMessages(newMessages);
+    },
+    [messages]
+  );
 
-  const onRerun = async (index: number) => {
-    sendMessage({ sendFromIndex: index });
-  };
+  const onRerun = useCallback(
+    async (index: number) => {
+      sendMessage({ sendFromIndex: index });
+    },
+    [sendMessage]
+  );
 
-  const onRunCode = async (codeInput: string, index: number) => {
-    sendMessage({ codeInput, sendFromIndex: index - 1 });
-  };
+  const onRunCode = useCallback(
+    async (codeInput: string, index: number) => {
+      sendMessage({ codeInput, sendFromIndex: index - 1 });
+    },
+    [sendMessage]
+  );
 
   useEffect(() => {
     const history: ReactNode[] = messages.reduce(
@@ -471,7 +453,7 @@ export const Chat = () => {
       }
     ).history;
     setHistory(history);
-  }, [messages, updateUI]);
+  }, [messages, updateUI, applyRequestToModel, onRerun, onRunCode, deleteMessage, sendMessage, updateMessage]);
 
   return (
     <div className="w-full flex flex-col">
@@ -536,4 +518,54 @@ export const Chat = () => {
       )}
     </div>
   );
+};
+
+const runCodeFromTextWithCode = (textWithCode: string, model: LLMModel) => {
+  const code = extractCodeFromMessage(textWithCode);
+  const messages = [];
+
+  const assistantMessage: LLMCodeMessage = {
+    role: "assistant",
+    type: "code",
+    text: code,
+    model,
+    date: new Date().toISOString(),
+    hidden: true,
+  };
+  messages.push(assistantMessage);
+
+  const runMessage = runCode(code);
+  messages.push(runMessage);
+
+  return messages;
+};
+
+const runCode = (code: string): LLMModelMessage | LLMErrorMessage => {
+  try {
+    const originalGeometries = new Function("jscad", code)(jscad);
+    const geometries = geometryTransformer(originalGeometries);
+    return {
+      type: "model",
+      role: "user",
+      geometries,
+      originalGeometries,
+      date: new Date().toISOString(),
+    };
+  } catch (e: any) {
+    const details = extractError(e);
+    let error = `${details.type}: ${details.message}`;
+    if (details.lineNumber) {
+      error += ` at ${details.lineNumber}`;
+      if (details.columnNumber) {
+        error += `:${details.columnNumber}`;
+      }
+    }
+    console.log(e);
+    return {
+      type: "error",
+      role: "user",
+      text: error,
+      date: new Date().toISOString(),
+    };
+  }
 };
