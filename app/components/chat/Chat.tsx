@@ -11,12 +11,9 @@ import {
   LLMModelMessage,
   LLMTextMessage,
 } from "@/app/types/llm";
-import { KeyboardEvent, ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { CodeMessage } from "./CodeMessage";
-import { ReactSketchCanvasRef } from "react-sketch-canvas";
-import { SketchInput } from "./SketchInput";
-import { getImageFromCanvas } from "@/app/helpers/extractImage";
 import { SketchMessage } from "./SketchMessage";
 import { buildMessageHistory } from "@/app/helpers/buildMessageHistory";
 import { extractCodeFromMessage } from "@/app/helpers/extractCodeFromMessage";
@@ -25,16 +22,26 @@ import { extractError } from "@/app/helpers/extractError";
 import { ModelMessage } from "./ModelMessage";
 import { ErrorMessage } from "./ErrorMessage";
 import { mergeImages } from "@/app/helpers/mergeImages";
-import { CircleAlert, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import { MessageGroup } from "./MessageGroup";
+import { ChatInput } from "./ChatInput";
+
+export type SendMessage = {
+  textInput?: string;
+  imageInput?: string;
+  sketchInput?: string;
+  hiddenInput?: string;
+  modelNormalMapImages?: string;
+  codeInput?: string;
+  sendFromIndex?: number;
+  overrideMessages?: LLMMessage[];
+};
 
 export const Chat = () => {
   const [messages, setMessages] = useState<LLMMessage[]>([]);
   const [history, setHistory] = useState<ReactNode[]>([]);
   const [updateUI, setUpdateUI] = useState<string>("");
   const error = useAppStore((state) => state.error);
-  const sendingMessage = useAppStore((state) => state.sendingMessage);
-  const textInput = useAppStore((state) => state.textInput);
   const model = useAppStore((state) => state.model);
   const autoRetry = useAppStore((state) => state.autoRetry);
   const maxRetryCount = useAppStore((state) => state.maxRetryCount);
@@ -43,8 +50,6 @@ export const Chat = () => {
   const setError = useAppStore((state) => state.setError);
   const setSendingMessage = useAppStore((state) => state.setSendingMessage);
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const drawingCanvasRef = useRef<ReactSketchCanvasRef>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottomDelayed = useCallback((delay = 100) => {
@@ -61,20 +66,13 @@ export const Chat = () => {
     async ({
       textInput,
       imageInput,
+      sketchInput,
       hiddenInput,
       modelNormalMapImages,
       codeInput,
       sendFromIndex = Infinity,
       overrideMessages = messages,
-    }: {
-      textInput?: string;
-      imageInput?: string;
-      hiddenInput?: string;
-      modelNormalMapImages?: string;
-      codeInput?: string;
-      sendFromIndex?: number;
-      overrideMessages?: LLMMessage[];
-    } = {}) => {
+    }: SendMessage = {}) => {
       setError(null);
       setTextInput("");
       setImageInput("");
@@ -108,13 +106,12 @@ export const Chat = () => {
         filteredMessages.push(userMessage);
       }
 
-      if (overrideMessages.length === 0) {
-        const image = await getImageFromCanvas(drawingCanvasRef.current);
+      if (sketchInput) {
         const userMessage: LLMMessage = {
           role: "user",
           type: "image",
           label: "sketch",
-          image,
+          image: sketchInput,
           model,
           date: new Date().toISOString(),
         };
@@ -284,27 +281,6 @@ export const Chat = () => {
     },
     [sendMessage]
   );
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      sendMessage({ textInput });
-    }
-  };
-
-  const handleInputChange = () => {
-    const el = textareaRef.current;
-
-    if (el) {
-      if (el.value.includes("\n")) {
-        el.style.height = "auto";
-        el.style.height = `${el.scrollHeight + 2}px`;
-      } else {
-        el.style.height = "auto";
-        el.style.height = "48px";
-      }
-    }
-  };
 
   const handleResetChatButton = () => {
     window.location.reload();
@@ -476,45 +452,7 @@ export const Chat = () => {
           boxShadow: "0 0 20px 5px var(--fallback-b1,oklch(var(--b1)))",
         }}
       >
-        <div className="flex flex-col gap-4 max-w-[800px] mx-auto">
-          {error && (
-            <div role="alert" className="alert">
-              <CircleAlert size={16} />
-              <span>{error}</span>
-            </div>
-          )}
-          {messages.length === 0 && (
-            <div className="text-center">
-              <p className="text-lg">Draw and/or describe what you want to make.</p>
-              <p className="text-xs text-[#666]">Quick tip: Start with simple geometry.</p>
-              <div className="flex flex-row justify-center mt-4">
-                <SketchInput
-                  ref={drawingCanvasRef}
-                  showControls
-                  width={256}
-                  height={256}
-                  onClear={() => {
-                    drawingCanvasRef.current?.clearCanvas();
-                  }}
-                />
-              </div>
-            </div>
-          )}
-          <div className="flex flex-row gap-4 items-end">
-            <textarea
-              className="flex-1 h-[48px] max-h-[400px] textarea textarea-primary"
-              placeholder={messages.length === 0 ? "Enter a description..." : "Enter a request..."}
-              value={textInput}
-              ref={textareaRef}
-              onChange={(event) => setTextInput(event.target.value)}
-              onKeyDown={handleKeyDown}
-              onInput={handleInputChange}
-            />
-            <button className="btn btn-primary" onClick={() => sendMessage({ textInput })} disabled={sendingMessage}>
-              Send {sendingMessage && <span className="loading loading-spinner loading-sm"></span>}
-            </button>
-          </div>
-        </div>
+        <ChatInput sendMessage={sendMessage} error={error} emptyChat={messages.length === 0} />
       </div>
     </div>
   );
