@@ -19,7 +19,7 @@
 
 ## Try it out
 
-Link to [demo](https://claudecad.com). **Requires an Anthropic API key.**
+Link to [demo](https://claudecad.com). **NB! The demo requires an Anthropic API key.**
 
 ## Run locally
 
