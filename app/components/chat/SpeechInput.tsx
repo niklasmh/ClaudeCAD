@@ -7,11 +7,11 @@ let timer: any;
 
 export const SpeechInput = () => {
   const setTextInput = useAppStore((state) => state.setTextInput);
-  const { transcript, listening, resetTranscript } = useSpeechRecognition();
+  const { interimTranscript, listening, resetTranscript } = useSpeechRecognition();
 
   useEffect(() => {
-    setTextInput(transcript);
-  }, [transcript, setTextInput]);
+    setTextInput(interimTranscript);
+  }, [interimTranscript, setTextInput]);
 
   const toggleListening = () => {
     if (listening) {
@@ -23,13 +23,13 @@ export const SpeechInput = () => {
   };
 
   useEffect(() => {
-    if (transcript) {
+    if (interimTranscript) {
       clearTimeout(timer!);
       timer = setTimeout(() => {
         SpeechRecognition.stopListening();
       }, 5000);
     }
-  }, [transcript]);
+  }, [interimTranscript]);
 
   return (
     <button className={"btn btn-outline "} onClick={toggleListening}>
