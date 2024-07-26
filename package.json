@@ -32,6 +32,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.4",
     "lucide-react": "^0.400.0",
+    "openai": "^4.53.0",
     "postcss": "^8",
     "react-markdown": "^9.0.1",
     "react-speech-recognition": "^3.10.0",

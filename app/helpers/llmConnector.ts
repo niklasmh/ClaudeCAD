@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { LLMMessage, LLMTextMessage } from "../types/llm";
+import OpenAI from "openai";
+
+import { isAnthropicKey, isOpenAIKey, LLMMessage, LLMTextMessage } from "../types/llm";
 import { receiveFromPersistentStore, saveToPersistentStore } from "./persistentStorage";
 
 type ErrorMessage = { error: string };
@@ -10,17 +12,33 @@ type LLMConnector = {
 
 const getAPIKey = (): string => {
   try {
-    const key = receiveFromPersistentStore<string>("anthropic_api_key", "");
-    if (!key) {
-      throw new Error("No API key found");
+    const anthropicKey = receiveFromPersistentStore<string>("anthropic_api_key", "");
+
+    if (!anthropicKey) {
+      const openAIKey = receiveFromPersistentStore<string>("openai_api_key", "");
+
+      if (!openAIKey) {
+        throw new Error("No API key found");
+      }
+
+      return openAIKey;
     }
-    return key;
+
+    return anthropicKey;
   } catch (e) {
-    const key = prompt("Please enter your Anthropic API key");
+    const key = prompt("Please enter your Anthropic or OpenAI API key");
+
     if (key) {
-      saveToPersistentStore<string>("anthropic_api_key", key);
-      return key;
+      if (isAnthropicKey(key)) {
+        saveToPersistentStore<string>("anthropic_api_key", key);
+        return key;
+      }
+      if (isOpenAIKey(key)) {
+        saveToPersistentStore<string>("openai_api_key", key);
+        return key;
+      }
     }
+
     return "";
   }
 };
@@ -29,12 +47,12 @@ const anthropicConnector = async (model: string, messages: LLMMessage[]): Promis
   const response = fetch("/api/claude", {
     method: "POST",
     body: JSON.stringify({
-      model: mapModel(model),
+      model: mapAnthropicModel(model),
       temperature: 0,
       system: getSystemMessage(messages),
-      messages: groupMessagesByRole(messages.map(mapMessage)),
+      messages: groupAnthropicMessagesByRole(messages.map(mapAnthropicMessage)),
       max_tokens: 1000,
-      anthropic_api_key: getAPIKey(),
+      api_key: getAPIKey(),
     }),
   });
   try {
@@ -48,12 +66,37 @@ const anthropicConnector = async (model: string, messages: LLMMessage[]): Promis
   }
 };
 
+const openaiConnector = async (model: string, messages: LLMMessage[]): Promise<string | ErrorMessage> => {
+  const response = fetch("/api/openai", {
+    method: "POST",
+    body: JSON.stringify({
+      model: mapOpenAIModel(model),
+      temperature: 0,
+      system: getSystemMessage(messages),
+      messages: groupOpenAIMessagesByRole(messages.map(mapOpenAIMessage)),
+      max_tokens: 1000,
+      api_key: getAPIKey(),
+    }),
+  });
+  try {
+    const data = (await response.then((r) => r.json())) as OpenAI.ChatCompletion | ErrorMessage;
+    if ("error" in data) {
+      return data;
+    }
+    return (data.choices[0].message as any).content;
+  } catch (e) {
+    return { error: await response.then((r) => r.text()) };
+  }
+};
+
 export const llmConnector: LLMConnector = {
   "claude-1.2-instant": (messages) => anthropicConnector("claude-1.2-instant", messages),
   "claude-3-opus": (messages) => anthropicConnector("claude-3-opus", messages),
   "claude-3-sonnet": (messages) => anthropicConnector("claude-3-sonnet", messages),
   "claude-3-haiku": (messages) => anthropicConnector("claude-3-haiku", messages),
   "claude-3.5": (messages) => anthropicConnector("claude-3.5", messages),
+  "gpt-4o": (messages) => openaiConnector("gpt-4o", messages),
+  "gpt-4o-mini": (messages) => openaiConnector("gpt-4o-mini", messages),
 };
 
 const getSystemMessage = (messages: LLMMessage[]): string => {
@@ -63,22 +106,26 @@ const getSystemMessage = (messages: LLMMessage[]): string => {
     .join("\n");
 };
 
-const mapRole = (role: LLMMessage["role"]): Anthropic.MessageCreateParamsNonStreaming["messages"][0]["role"] => {
+const mapAnthropicRole = (
+  role: LLMMessage["role"]
+): Anthropic.MessageCreateParamsNonStreaming["messages"][0]["role"] => {
   if (role === "user") {
     return "user";
   }
   return "assistant";
 };
 
-const mapMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStreaming["messages"][0] => {
+const mapAnthropicMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStreaming["messages"][0] => {
+  const role = mapAnthropicRole(message.role);
+
   if (message.type === "text") {
     return {
-      role: mapRole(message.role),
+      role,
       content: [{ type: message.type, text: message.text }],
     };
   } else if (message.type === "image") {
     return {
-      role: mapRole(message.role),
+      role,
       content: [
         {
           type: message.type,
@@ -92,19 +139,19 @@ const mapMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStream
     };
   } else if (message.type === "code") {
     return {
-      role: mapRole(message.role),
+      role,
       content: [{ type: "text", text: "Here is the code used:\n\n```javascript\n" + message.text + "\n```" }],
     };
   } else if (message.type === "error") {
     return {
-      role: mapRole(message.role),
+      role,
       content: [
         { type: "text", text: "This is the error message from the code above:\n\n```\n" + message.text + "\n```" },
       ],
     };
   } else if (message.type === "model") {
     return {
-      role: mapRole(message.role),
+      role,
       content: [],
     };
   } else {
@@ -112,7 +159,56 @@ const mapMessage = (message: LLMMessage): Anthropic.MessageCreateParamsNonStream
   }
 };
 
-const groupMessagesByRole = (
+const mapOpenAIRole = (role: LLMMessage["role"]): OpenAI.ChatCompletionCreateParams["messages"][0]["role"] => {
+  if (role === "user") {
+    return "user";
+  }
+  return "assistant";
+};
+
+const mapOpenAIMessage = (message: LLMMessage): OpenAI.ChatCompletionCreateParams["messages"][0] => {
+  const role = mapOpenAIRole(message.role);
+
+  if (message.type === "text") {
+    return {
+      role,
+      content: [{ type: message.type, text: message.text }],
+    } as OpenAI.ChatCompletionCreateParams["messages"][0];
+  } else if (message.type === "image") {
+    return {
+      role,
+      content: [
+        {
+          type: "image_url",
+          image_url: {
+            url: "data:image/png;base64," + message.image.split(",")[1],
+          },
+        },
+      ],
+    } as OpenAI.ChatCompletionCreateParams["messages"][0];
+  } else if (message.type === "code") {
+    return {
+      role,
+      content: [{ type: "text", text: "Here is the code used:\n\n```javascript\n" + message.text + "\n```" }],
+    } as OpenAI.ChatCompletionCreateParams["messages"][0];
+  } else if (message.type === "error") {
+    return {
+      role,
+      content: [
+        { type: "text", text: "This is the error message from the code above:\n\n```\n" + message.text + "\n```" },
+      ],
+    } as OpenAI.ChatCompletionCreateParams["messages"][0];
+  } else if (message.type === "model") {
+    return {
+      role,
+      content: [],
+    } as OpenAI.ChatCompletionCreateParams["messages"][0];
+  } else {
+    throw new Error(`Unknown message type: ${(message as any).type}`);
+  }
+};
+
+const groupAnthropicMessagesByRole = (
   messages: Anthropic.MessageCreateParamsNonStreaming["messages"]
 ): Anthropic.MessageCreateParamsNonStreaming["messages"] => {
   const newMessages = [messages[0]];
@@ -134,7 +230,29 @@ const groupMessagesByRole = (
   return newMessages;
 };
 
-const mapModel = (model: string): Anthropic.MessageCreateParamsNonStreaming["model"] => {
+const groupOpenAIMessagesByRole = (
+  messages: OpenAI.ChatCompletionCreateParams["messages"]
+): OpenAI.ChatCompletionCreateParams["messages"] => {
+  const newMessages = [messages[0]];
+
+  for (let i = 0; i < messages.length - 1; i++) {
+    const message = messages[i];
+    const nextMessage = messages[i + 1];
+
+    if (message.role !== nextMessage.role) {
+      newMessages.push(nextMessage);
+    } else {
+      newMessages[newMessages.length - 1].content = [
+        ...(newMessages[newMessages.length - 1].content || []),
+        ...(nextMessage.content as any),
+      ];
+    }
+  }
+
+  return newMessages;
+};
+
+const mapAnthropicModel = (model: string): Anthropic.MessageCreateParamsNonStreaming["model"] => {
   switch (model) {
     case "claude-1.2-instant":
       return "claude-instant-1.2";
@@ -147,5 +265,15 @@ const mapModel = (model: string): Anthropic.MessageCreateParamsNonStreaming["mod
     case "claude-3.5":
     default:
       return "claude-3-5-sonnet-20240620";
+  }
+};
+
+const mapOpenAIModel = (model: string): OpenAI.Chat.ChatModel => {
+  switch (model) {
+    case "gpt-4o-mini":
+      return "gpt-4o-mini";
+    case "gpt-4o":
+    default:
+      return "gpt-4o";
   }
 };

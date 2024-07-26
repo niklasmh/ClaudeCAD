@@ -1,9 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const { model, temperature = 0, system = "", messages, max_tokens = 1_000, api_key = "" } = await req.json();
+  const { model, temperature = 0, messages, max_tokens = 1_000, api_key = "" } = await req.json();
 
   if (!api_key) {
     return Response.json(
@@ -19,15 +19,12 @@ export async function POST(req: Request) {
     );
   }
 
-  const anthropic = new Anthropic({
-    apiKey: api_key,
-  });
+  const client = new OpenAI();
 
-  const response = await anthropic.messages.create({
+  const response = await client.chat.completions.create({
+    messages,
     model,
     temperature,
-    system,
-    messages,
     max_tokens,
   });
 

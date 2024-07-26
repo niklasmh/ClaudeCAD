@@ -1,5 +1,13 @@
 import { create } from "zustand";
-import { defaultModel, LLMMessage, LLMModel } from "./types/llm";
+import {
+  defaultAnthropicModel,
+  defaultModel,
+  defaultOpenAIModel,
+  isAnthropicKey,
+  isOpenAIKey,
+  LLMMessage,
+  LLMModel,
+} from "./types/llm";
 import { receiveFromPersistentStore } from "./helpers/persistentStorage";
 
 interface AppState {
@@ -25,17 +33,21 @@ interface AppState {
   setApiKey: (apiKey: string) => void;
 }
 
+const apiKey =
+  receiveFromPersistentStore<string>("anthropic_api_key", "") ||
+  receiveFromPersistentStore<string>("openai_api_key", "");
+
 export const useAppStore = create<AppState>((set) => ({
   textInput: "",
   imageInput: "",
   error: null,
   sendingMessage: false,
   messages: [],
-  model: defaultModel,
+  model: isAnthropicKey(apiKey) ? defaultAnthropicModel : isOpenAIKey(apiKey) ? defaultOpenAIModel : defaultModel,
   projectName: "",
   autoRetry: true,
   maxRetryCount: 4,
-  apiKey: receiveFromPersistentStore<string>("anthropic_api_key", ""),
+  apiKey,
   setTextInput: (textInput: string) => set({ textInput }),
   setImageInput: (imageInput: string) => set({ imageInput }),
   setError: (error: string | null) => set({ error }),
