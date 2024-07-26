@@ -33,8 +33,10 @@ const getAPIKey = (): string => {
         saveToPersistentStore<string>("anthropic_api_key", key);
         return key;
       }
+
       if (isOpenAIKey(key)) {
         saveToPersistentStore<string>("openai_api_key", key);
+        window.location.reload();
         return key;
       }
     }
