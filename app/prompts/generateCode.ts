@@ -18,7 +18,7 @@ ${codeTemplate}
 
 The variable "jscad" is available for use in the code. It contains the JSCAD API. Each unit in the code should be in millimeters. The code should end with "return main()".
 
-Before generating the code, reason about the request and the sketches to understand the model that needs to be created. If you have any questions, feel free to ask me. If you need more information, ask me for a description or a sketch of the model.
+Before generating the code, reason about the request and the sketches to understand the model that needs to be created. Avoid complex geometry, and always start simple. Do not use polygons unless it is specified. Prefer using boolean operations with simple primitives to avoid complexity. If you have any questions, feel free to ask me. If you need more information, ask me for a description or a sketch of the model.
 `;
 };
 
@@ -31,11 +31,11 @@ ${request}
 };
 
 export const sketchDescription = (): string => {
-  return `Here is a sketch of the model to help you generate the code. The sketch is hand-drawn and may have imperfections. Try to reason what is the intended output based on the sketch before writing the code.`;
+  return `Here is a sketch of the model to help you generate the code. The sketch is hand-drawn and have imperfections. Assume that all drawings represent simple basic geometry. Try to reason what is the intended output based on the sketch before writing the code.`;
 };
 
 export const imageWithSketchDescription = (): string => {
-  return `Here is an image of the 3D model with a sketch on it to guide you on where or how you should fix the model in the code. The sketch is hand-drawn and may have imperfections. Try to reason what is the intended output based on the image before writing the code.`;
+  return `Here is an image of the 3D model with a sketch on it to guide you on where or how you should fix the model in the code. The sketch is hand-drawn and have imperfections. Assume that all drawings represent simple basic geometry. Try to reason what is the intended output based on the image before writing the code.`;
 };
 
 export const normalMappingDescription = (): string => {
