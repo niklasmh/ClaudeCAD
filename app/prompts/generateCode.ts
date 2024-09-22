@@ -1,9 +1,16 @@
 import { codeTemplate } from "./variables/codeTemplate";
+import { JSCADInstructions, JSCADInstructionsShort } from "./variables/JSCADInstructions";
 
 export const generateCode = (): string => {
   return `You are a JSCAD JavaScript code generator. I will come with a request for what I want to make in JSCAD, using everything from vague ideas to precise ideas with measurements. Your task is to understand request, and attempt to help me realize this idea. The process is iterative, so you should start with the parts that are important for the foundation of the model, and then we can refine the model together later.
 
-Generate the JSCAD code based on this template:
+Generate the JSCAD code based on this these instructions:
+
+\`\`\`javascript
+${JSCADInstructionsShort}
+\`\`\`
+
+Here is a template for the code. Following this is essential for the code to work in JSCAD:
 
 \`\`\`javascript
 ${codeTemplate}

@@ -95,7 +95,7 @@ export const buildMessageHistory = (messages: LLMMessage[], type: "generate-mode
       newMessages = modifyMessagesOfType<LLMErrorMessage>(
         newMessages,
         (m) => m.type === "error",
-        (m) => ({ ...m, text: fixCodeFromError(codeMessage.text, m.text) }),
+        (m, count) => ({ ...m, text: fixCodeFromError(codeMessage.text, m.text, count) }),
         1
       );
     }
@@ -109,7 +109,7 @@ export const buildMessageHistory = (messages: LLMMessage[], type: "generate-mode
 const modifyMessagesOfType = <T extends LLMMessage>(
   messages: LLMMessage[],
   filter: (message: LLMMessage) => boolean,
-  modifier: (message: T) => LLMMessage,
+  modifier: (message: T, count: number) => LLMMessage,
   n: number = Infinity,
   skipN: number = 0
 ): LLMMessage[] => {
@@ -123,7 +123,7 @@ const modifyMessagesOfType = <T extends LLMMessage>(
         skip--;
         continue;
       } else if (count > 0) {
-        newMessages.push(modifier(message as T));
+        newMessages.push(modifier(message as T, n - count + 1));
         count--;
         continue;
       }
