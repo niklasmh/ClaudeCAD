@@ -266,7 +266,7 @@ const mapAnthropicModel = (model: string): Anthropic.MessageCreateParamsNonStrea
       return "claude-3-haiku-20240307";
     case "claude-3.5":
     default:
-      return "claude-3-5-sonnet-20241022";
+      return "claude-3-5-sonnet-latest";
   }
 };
 
