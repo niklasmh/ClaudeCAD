@@ -91,6 +91,34 @@ const openaiConnector = async (model: string, messages: LLMMessage[]): Promise<s
   }
 };
 
+const ollamaConnector = async (model: string, messages: LLMMessage[]): Promise<string | ErrorMessage> => {
+  const response = fetch("/api/ollama", {
+    method: "POST",
+    body: JSON.stringify({
+      model: mapOllamaModel(model),
+      temperature: 0,
+      messages: groupOllamaMessagesByRole(messages.map(mapOllamaMessage)),
+    }),
+  });
+  type OllamaResponse = {
+    done: boolean;
+    message: {
+      role: "user" | "assistant";
+      content: string;
+    };
+    total_duration: number;
+  };
+  try {
+    const data = (await response.then((r) => r.json())) as OllamaResponse | ErrorMessage;
+    if ("error" in data) {
+      return data;
+    }
+    return data.message.content;
+  } catch (e) {
+    return { error: await response.then((r) => r.text()) };
+  }
+};
+
 export const llmConnector: LLMConnector = {
   "claude-1.2-instant": (messages) => anthropicConnector("claude-1.2-instant", messages),
   "claude-3-opus": (messages) => anthropicConnector("claude-3-opus", messages),
@@ -99,6 +127,8 @@ export const llmConnector: LLMConnector = {
   "claude-3.5": (messages) => anthropicConnector("claude-3.5", messages),
   "gpt-4o": (messages) => openaiConnector("gpt-4o", messages),
   "gpt-4o-mini": (messages) => openaiConnector("gpt-4o-mini", messages),
+  "ollama-deepseek-r1:32b": (messages) => ollamaConnector("ollama-deepseek-r1:32b", messages),
+  "ollama-deepseek-coder-v2:16b": (messages) => ollamaConnector("ollama-deepseek-coder-v2:16b", messages),
 };
 
 const getSystemMessage = (messages: LLMMessage[]): string => {
@@ -210,6 +240,48 @@ const mapOpenAIMessage = (message: LLMMessage): OpenAI.ChatCompletionCreateParam
   }
 };
 
+const mapOllamaRole = (role: LLMMessage["role"]): "user" | "assistant" => {
+  if (role === "user") {
+    return "user";
+  }
+  return "assistant";
+};
+
+const mapOllamaMessage = (
+  message: LLMMessage
+): { role: "user" | "assistant"; content: string; images?: string[] | null } => {
+  const role = mapOllamaRole(message.role);
+
+  if (message.type === "text") {
+    return {
+      role,
+      content: message.text,
+    };
+  } else if (message.type === "image") {
+    return {
+      role,
+      content: "", // Autogenerate description of image in frontend using llama3.2-vision
+    };
+  } else if (message.type === "code") {
+    return {
+      role: "user",
+      content: "Here is the code used:\n\n```javascript\n" + message.text + "\n```",
+    };
+  } else if (message.type === "error") {
+    return {
+      role,
+      content: "This is the error message from the code above:\n\n```\n" + message.text + "\n```",
+    };
+  } else if (message.type === "model") {
+    return {
+      role,
+      content: "",
+    };
+  } else {
+    throw new Error(`Unknown message type: ${(message as any).type}`);
+  }
+};
+
 const groupAnthropicMessagesByRole = (
   messages: Anthropic.MessageCreateParamsNonStreaming["messages"]
 ): Anthropic.MessageCreateParamsNonStreaming["messages"] => {
@@ -254,6 +326,28 @@ const groupOpenAIMessagesByRole = (
   return newMessages;
 };
 
+const groupOllamaMessagesByRole = (
+  messages: { role: "user" | "assistant"; content: string; images?: string[] | null }[]
+): { role: "user" | "assistant"; content: string; images?: string[] | null }[] => {
+  const newMessages = [messages[0]];
+
+  for (let i = 0; i < messages.length - 1; i++) {
+    const message = messages[i];
+    const nextMessage = messages[i + 1];
+
+    if (message.role !== nextMessage.role) {
+      newMessages.push(nextMessage);
+    } else {
+      newMessages[newMessages.length - 1].content = [
+        newMessages[newMessages.length - 1].content || "",
+        nextMessage.content,
+      ].join("\n\n");
+    }
+  }
+
+  return newMessages;
+};
+
 const mapAnthropicModel = (model: string): Anthropic.MessageCreateParamsNonStreaming["model"] => {
   switch (model) {
     case "claude-1.2-instant":
@@ -277,5 +371,17 @@ const mapOpenAIModel = (model: string): OpenAI.Chat.ChatModel => {
     case "gpt-4o":
     default:
       return "gpt-4o";
+  }
+};
+
+const mapOllamaModel = (model: string): string => {
+  switch (model) {
+    case "ollama-llama3.2-vision:11b":
+      return "llama3.2-vision:11b";
+    case "ollama-deepseek-r1:32b":
+      return "deepseek-r1:32b";
+    case "ollama-deepseek-coder-v2:16b":
+    default:
+      return "deepseek-coder-v2:16b";
   }
 };

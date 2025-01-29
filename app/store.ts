@@ -43,7 +43,7 @@ export const useAppStore = create<AppState>((set) => ({
   error: null,
   sendingMessage: false,
   messages: [],
-  model: isAnthropicKey(apiKey) ? defaultAnthropicModel : isOpenAIKey(apiKey) ? defaultOpenAIModel : defaultModel,
+  model: LLMModel.OLLAMA_DEEPSEEK_R1_32B, //isAnthropicKey(apiKey) ? defaultAnthropicModel : isOpenAIKey(apiKey) ? defaultOpenAIModel : defaultModel,
   projectName: "",
   autoRetry: true,
   maxRetryCount: 4,
