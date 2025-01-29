@@ -52,6 +52,9 @@ export enum LLMModel {
   CLAUDE_3_5 = "claude-3.5",
   GPT_4O = "gpt-4o",
   GPT_4O_MINI = "gpt-4o-mini",
+  OLLAMA_DEEPSEEK_R1_32B = "ollama-deepseek-r1:32b",
+  OLLAMA_DEEPSEEK_CODER_V2_16B = "ollama-deepseek-coder-v2:16b",
+  OLLAMA_LLAMA3_2_VISION_11B = "ollama-llama3.2-vision:11b",
 }
 
 export const defaultModel = LLMModel.CLAUDE_3_5;
@@ -66,6 +69,9 @@ export const modelNames: Record<LLMModel, string> = {
   [LLMModel.CLAUDE_3_5]: "Claude 3.5 Sonnet",
   [LLMModel.GPT_4O]: "GPT-4o",
   [LLMModel.GPT_4O_MINI]: "GPT-4o Mini",
+  [LLMModel.OLLAMA_DEEPSEEK_R1_32B]: "Ollama DeepSeek R1 32B",
+  [LLMModel.OLLAMA_DEEPSEEK_CODER_V2_16B]: "Ollama DeepSeek Coder V2 16B",
+  [LLMModel.OLLAMA_LLAMA3_2_VISION_11B]: "Ollama Llama3.2 Vision 11B",
 };
 
 export const isAnthropicKey = (key: string) => key.startsWith("sk-ant-");
