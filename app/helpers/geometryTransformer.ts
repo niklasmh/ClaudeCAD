@@ -4,7 +4,8 @@ import { Geometry } from "../types/geometry";
 import { Vector3, Matrix4 } from "three";
 
 export const geometryTransformer = (geometry: Geom3[]): Geometry[] => {
-  const entities = entitiesFromSolids({}, ...geometry);
+  const geometries = Array.isArray(geometry) ? geometry : [geometry];
+  const entities = entitiesFromSolids({}, ...geometries);
 
   return entities.map((entity) => {
     let colors;
