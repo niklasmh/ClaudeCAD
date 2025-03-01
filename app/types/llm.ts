@@ -55,8 +55,8 @@ export enum LLMModel {
   GPT_4O_MINI = "gpt-4o-mini",
 }
 
-export const defaultModel = LLMModel.CLAUDE_3_5;
-export const defaultAnthropicModel = LLMModel.CLAUDE_3_5;
+export const defaultModel = LLMModel.CLAUDE_3_7;
+export const defaultAnthropicModel = LLMModel.CLAUDE_3_7;
 export const defaultOpenAIModel = LLMModel.GPT_4O_MINI;
 
 export const modelNames: Record<LLMModel, string> = {

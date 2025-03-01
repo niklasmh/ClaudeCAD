@@ -97,6 +97,7 @@ export const llmConnector: LLMConnector = {
   "claude-3-sonnet": (messages) => anthropicConnector("claude-3-sonnet", messages),
   "claude-3-haiku": (messages) => anthropicConnector("claude-3-haiku", messages),
   "claude-3.5": (messages) => anthropicConnector("claude-3.5", messages),
+  "claude-3.7": (messages) => anthropicConnector("claude-3.7", messages),
   "gpt-4o": (messages) => openaiConnector("gpt-4o", messages),
   "gpt-4o-mini": (messages) => openaiConnector("gpt-4o-mini", messages),
 };
