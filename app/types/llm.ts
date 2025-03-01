@@ -50,6 +50,7 @@ export enum LLMModel {
   CLAUDE_3_SONNET = "claude-3-sonnet",
   CLAUDE_3_HAIKU = "claude-3-haiku",
   CLAUDE_3_5 = "claude-3.5",
+  CLAUDE_3_7 = "claude-3.7",
   GPT_4O = "gpt-4o",
   GPT_4O_MINI = "gpt-4o-mini",
 }
@@ -64,6 +65,7 @@ export const modelNames: Record<LLMModel, string> = {
   [LLMModel.CLAUDE_3_SONNET]: "Claude 3 Sonnet",
   [LLMModel.CLAUDE_3_HAIKU]: "Claude 3 Haiku",
   [LLMModel.CLAUDE_3_5]: "Claude 3.5 Sonnet",
+  [LLMModel.CLAUDE_3_7]: "Claude 3.7 Sonnet",
   [LLMModel.GPT_4O]: "GPT-4o",
   [LLMModel.GPT_4O_MINI]: "GPT-4o Mini",
 };

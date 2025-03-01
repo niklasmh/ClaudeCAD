@@ -265,8 +265,11 @@ const mapAnthropicModel = (model: string): Anthropic.MessageCreateParamsNonStrea
     case "claude-3-haiku":
       return "claude-3-haiku-20240307";
     case "claude-3.5":
-    default:
       return "claude-3-5-sonnet-latest";
+    case "claude-3.7":
+      return "claude-3-7-sonnet-latest";
+    default:
+      return model;
   }
 };
 
@@ -274,6 +277,12 @@ const mapOpenAIModel = (model: string): OpenAI.Chat.ChatModel => {
   switch (model) {
     case "gpt-4o-mini":
       return "gpt-4o-mini";
+    case "gpt-o1":
+      return "o1";
+    case "gpt-o1-mini":
+      return "o1-mini";
+    case "gpt-o3-mini":
+      return "o3-mini";
     case "gpt-4o":
     default:
       return "gpt-4o";
