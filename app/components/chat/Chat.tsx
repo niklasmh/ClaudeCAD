@@ -25,6 +25,7 @@ import { mergeImages } from "@/app/helpers/mergeImages";
 import { Trash } from "lucide-react";
 import { MessageGroup } from "./MessageGroup";
 import { ChatInput } from "./ChatInput";
+import { SelectModel } from "./SelectModel";
 
 export type SendMessage = {
   textInput?: string;
@@ -158,7 +159,7 @@ export const Chat = () => {
             role: "assistant",
             type: "text",
             label: "assistant-no-code",
-            text: "Got an unknown error from the server. Try again.",
+            text: textWithCode.error || "Got an unknown error from the server. Try again.",
             model,
             date: new Date().toISOString(),
           };
@@ -467,7 +468,7 @@ export const Chat = () => {
             Reset chat <Trash size={16} />
           </button>
         )}
-        <div ref={anchorRef} className="mt-8" />
+        <div ref={anchorRef} className="mt-14" />
       </div>
       <div
         className="fixed bottom-0 left-0 right-0 bg-base-100 z-20 pt-4 pb-6 px-4"
@@ -476,6 +477,7 @@ export const Chat = () => {
         }}
       >
         <ChatInput sendMessage={sendMessage} error={error} emptyChat={messages.length === 0} />
+        <SelectModel messageCount={messages.length} />
       </div>
     </div>
   );

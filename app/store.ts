@@ -1,14 +1,5 @@
 import { create } from "zustand";
-import {
-  defaultAnthropicModel,
-  defaultModel,
-  defaultOpenAIModel,
-  isAnthropicKey,
-  isOpenAIKey,
-  LLMMessage,
-  LLMModel,
-} from "./types/llm";
-import { receiveFromPersistentStore } from "./helpers/persistentStorage";
+import { LLMMessage, LLMModel } from "./types/llm";
 
 interface AppState {
   textInput: string;
@@ -20,7 +11,6 @@ interface AppState {
   projectName: string;
   autoRetry: boolean;
   maxRetryCount: number;
-  apiKey: string;
   setTextInput: (textInput: string) => void;
   setImageInput: (imageInput: string) => void;
   setError: (error: string | null) => void;
@@ -30,12 +20,7 @@ interface AppState {
   setProjectName: (projectName: string) => void;
   setAutoRetry: (autoRetry: boolean) => void;
   setMaxRetryCount: (retryCount: number) => void;
-  setApiKey: (apiKey: string) => void;
 }
-
-const apiKey =
-  receiveFromPersistentStore<string>("anthropic_api_key", "") ||
-  receiveFromPersistentStore<string>("openai_api_key", "");
 
 export const useAppStore = create<AppState>((set) => ({
   textInput: "",
@@ -43,11 +28,10 @@ export const useAppStore = create<AppState>((set) => ({
   error: null,
   sendingMessage: false,
   messages: [],
-  model: isAnthropicKey(apiKey) ? defaultAnthropicModel : isOpenAIKey(apiKey) ? defaultOpenAIModel : defaultModel,
+  model: LLMModel.NOT_SET,
   projectName: "",
   autoRetry: true,
   maxRetryCount: 4,
-  apiKey,
   setTextInput: (textInput: string) => set({ textInput }),
   setImageInput: (imageInput: string) => set({ imageInput }),
   setError: (error: string | null) => set({ error }),
@@ -57,5 +41,4 @@ export const useAppStore = create<AppState>((set) => ({
   setProjectName: (projectName: string) => set({ projectName }),
   setAutoRetry: (autoRetry: boolean) => set({ autoRetry }),
   setMaxRetryCount: (maxRetryCount: number) => set({ maxRetryCount }),
-  setApiKey: (apiKey: string) => set({ apiKey }),
 }));

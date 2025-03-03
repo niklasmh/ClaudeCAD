@@ -10,34 +10,22 @@ type LLMConnector = {
   [model: string]: (messages: LLMMessage[]) => Promise<string | ErrorMessage>;
 };
 
-const getAPIKey = (): string => {
+const getAPIKey = (key: string, keyName: string, detectKeyType: Function): string => {
   try {
-    const anthropicKey = receiveFromPersistentStore<string>("anthropic_api_key", "");
+    const keyValue = receiveFromPersistentStore<string>(key, "");
 
-    if (!anthropicKey) {
-      const openAIKey = receiveFromPersistentStore<string>("openai_api_key", "");
-
-      if (!openAIKey) {
-        throw new Error("No API key found");
-      }
-
-      return openAIKey;
+    if (!keyValue) {
+      throw new Error("No API key found");
     }
 
-    return anthropicKey;
+    return keyValue;
   } catch (e) {
-    const key = prompt("Please enter your Anthropic or OpenAI API key");
+    const keyValue = prompt(`Please enter your ${keyName} key`);
 
-    if (key) {
-      if (isAnthropicKey(key)) {
-        saveToPersistentStore<string>("anthropic_api_key", key);
-        return key;
-      }
-
-      if (isOpenAIKey(key)) {
-        saveToPersistentStore<string>("openai_api_key", key);
-        window.location.reload();
-        return key;
+    if (keyValue) {
+      if (detectKeyType(keyValue)) {
+        saveToPersistentStore<string>(key, keyValue);
+        return keyValue;
       }
     }
 
@@ -45,7 +33,16 @@ const getAPIKey = (): string => {
   }
 };
 
+export const getAnthropicAPIKey = (): string => getAPIKey("anthropic_api_key", "Anthropic", isAnthropicKey);
+export const getOpenAIAPIKey = (): string => getAPIKey("openai_api_key", "OpenAI", isOpenAIKey);
+
 const anthropicConnector = async (model: string, messages: LLMMessage[]): Promise<string | ErrorMessage> => {
+  const apiKey = getAnthropicAPIKey();
+
+  if (!apiKey) {
+    return { error: "No API key found" };
+  }
+
   const response = fetch("/api/claude", {
     method: "POST",
     body: JSON.stringify({
@@ -54,7 +51,7 @@ const anthropicConnector = async (model: string, messages: LLMMessage[]): Promis
       system: getSystemMessage(messages),
       messages: groupAnthropicMessagesByRole(messages.map(mapAnthropicMessage)),
       max_tokens: 1000,
-      api_key: getAPIKey(),
+      api_key: apiKey,
     }),
   });
   try {
@@ -69,6 +66,12 @@ const anthropicConnector = async (model: string, messages: LLMMessage[]): Promis
 };
 
 const openaiConnector = async (model: string, messages: LLMMessage[]): Promise<string | ErrorMessage> => {
+  const apiKey = getOpenAIAPIKey();
+
+  if (!apiKey) {
+    return { error: "No API key found" };
+  }
+
   const response = fetch("/api/openai", {
     method: "POST",
     body: JSON.stringify({
@@ -77,7 +80,7 @@ const openaiConnector = async (model: string, messages: LLMMessage[]): Promise<s
       system: getSystemMessage(messages),
       messages: groupOpenAIMessagesByRole(messages.map(mapOpenAIMessage)),
       max_tokens: 1000,
-      api_key: getAPIKey(),
+      api_key: apiKey,
     }),
   });
   try {
@@ -100,6 +103,10 @@ export const llmConnector: LLMConnector = {
   "claude-3.7": (messages) => anthropicConnector("claude-3.7", messages),
   "gpt-4o": (messages) => openaiConnector("gpt-4o", messages),
   "gpt-4o-mini": (messages) => openaiConnector("gpt-4o-mini", messages),
+  "gpt-o1": (messages) => openaiConnector("gpt-o1", messages),
+  "gpt-o1-mini": (messages) => openaiConnector("gpt-o1-mini", messages),
+  "gpt-o3-mini": (messages) => openaiConnector("gpt-o3-mini", messages),
+  "gpt-4.5": (messages) => openaiConnector("gpt-4.5", messages),
 };
 
 const getSystemMessage = (messages: LLMMessage[]): string => {
@@ -284,6 +291,8 @@ const mapOpenAIModel = (model: string): OpenAI.Chat.ChatModel => {
       return "o1-mini";
     case "gpt-o3-mini":
       return "o3-mini";
+    case "gpt-4.5":
+      return "gpt-4.5-preview";
     case "gpt-4o":
     default:
       return "gpt-4o";
