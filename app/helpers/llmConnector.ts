@@ -50,7 +50,7 @@ const anthropicConnector = async (model: string, messages: LLMMessage[]): Promis
       temperature: 0,
       system: getSystemMessage(messages),
       messages: groupAnthropicMessagesByRole(messages.map(mapAnthropicMessage)),
-      max_tokens: 1000,
+      //max_tokens: 1000,
       api_key: apiKey,
     }),
   });
@@ -79,7 +79,7 @@ const openaiConnector = async (model: string, messages: LLMMessage[]): Promise<s
       temperature: 0,
       system: getSystemMessage(messages),
       messages: groupOpenAIMessagesByRole(messages.map(mapOpenAIMessage)),
-      max_tokens: 1000,
+      //max_tokens: 1000,
       api_key: apiKey,
     }),
   });
