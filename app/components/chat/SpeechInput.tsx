@@ -16,7 +16,7 @@ export const SpeechInput = ({ onChange, className }: Props) => {
 
   useEffect(() => {
     if (isListening && transcript) onChange(transcript);
-  }, [isListening, transcript]);
+  }, [isListening, transcript, onChange]);
 
   const toggleListening = () => {
     if (isListening) {

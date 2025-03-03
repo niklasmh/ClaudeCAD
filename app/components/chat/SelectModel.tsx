@@ -29,11 +29,11 @@ export const SelectModel = ({ messageCount }: Props) => {
   });
 
   const updateAnthropicAPIKey = () => {
-    setApiKeys({ ...apiKeys, claude: getAnthropicAPIKey() });
+    setApiKeys((keys) => ({ ...keys, claude: getAnthropicAPIKey() }));
   };
 
   const updateOpenAIAPIKey = () => {
-    setApiKeys({ ...apiKeys, openai: getOpenAIAPIKey() });
+    setApiKeys((keys) => ({ ...keys, openai: getOpenAIAPIKey() }));
   };
 
   useEffect(() => {
