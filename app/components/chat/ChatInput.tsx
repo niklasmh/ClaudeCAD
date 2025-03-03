@@ -89,7 +89,7 @@ export const ChatInput = ({ sendMessage, error, emptyChat }: Props) => {
         />
         <SpeechInput onChange={setTextInput} />
         <button className="btn btn-primary btn-square btn-lg" onClick={handleSendMessage} disabled={sendingMessage}>
-          <SendHorizonal size={20} /> {sendingMessage && <span className="loading loading-spinner loading-sm"></span>}
+          {sendingMessage ? <span className="loading loading-spinner loading-sm"></span> : <SendHorizonal size={20} />}
         </button>
       </div>
     </div>
