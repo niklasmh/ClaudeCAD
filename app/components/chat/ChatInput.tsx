@@ -5,7 +5,7 @@ import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { useRef } from "react";
 import { useAppStore } from "@/app/store";
 import { SendMessage } from "./Chat";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, SendHorizonal } from "lucide-react";
 import { SpeechInput } from "./SpeechInput";
 
 type Props = {
@@ -46,7 +46,7 @@ export const ChatInput = ({ sendMessage, error, emptyChat }: Props) => {
         el.style.height = `${el.scrollHeight + 2}px`;
       } else {
         el.style.height = "auto";
-        el.style.height = "40px";
+        el.style.height = "48px";
       }
     }
   };
@@ -78,7 +78,7 @@ export const ChatInput = ({ sendMessage, error, emptyChat }: Props) => {
       )}
       <div className="flex flex-row gap-4 items-end">
         <textarea
-          className="flex-1 h-[40px] min-h-0 max-h-[400px] textarea textarea-primary"
+          className="flex-1 h-[48px] min-h-0 py-3 px-4 max-h-[400px] textarea textarea-primary"
           placeholder={emptyChat ? "Enter a description..." : "Enter a request..."}
           value={textInput}
           ref={textareaRef}
@@ -88,8 +88,8 @@ export const ChatInput = ({ sendMessage, error, emptyChat }: Props) => {
           onInput={handleInputChange}
         />
         <SpeechInput onChange={setTextInput} />
-        <button className="btn btn-primary" onClick={handleSendMessage} disabled={sendingMessage}>
-          Send {sendingMessage && <span className="loading loading-spinner loading-sm"></span>}
+        <button className="btn btn-primary btn-square btn-lg" onClick={handleSendMessage} disabled={sendingMessage}>
+          <SendHorizonal size={20} /> {sendingMessage && <span className="loading loading-spinner loading-sm"></span>}
         </button>
       </div>
     </div>

@@ -40,8 +40,8 @@ export const SpeechInput = ({ onChange, className }: Props) => {
   }, [isListening, transcript]);
 
   return (
-    <button className={"btn btn-outline " + className} onClick={toggleListening}>
-      {isListening ? <div className="loading loading-ball loading-xs" /> : <Mic size={16} />}
+    <button className={"btn btn-primary btn-soft btn-lg btn-square " + className} onClick={toggleListening}>
+      {isListening ? <div className="loading loading-ball loading-xs" /> : <Mic size={20} />}
     </button>
   );
 };
