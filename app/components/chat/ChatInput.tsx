@@ -46,7 +46,7 @@ export const ChatInput = ({ sendMessage, error, emptyChat }: Props) => {
         el.style.height = `${el.scrollHeight + 2}px`;
       } else {
         el.style.height = "auto";
-        el.style.height = "48px";
+        el.style.height = "40px";
       }
     }
   };
@@ -78,10 +78,11 @@ export const ChatInput = ({ sendMessage, error, emptyChat }: Props) => {
       )}
       <div className="flex flex-row gap-4 items-end">
         <textarea
-          className="flex-1 h-[48px] max-h-[400px] textarea textarea-primary"
+          className="flex-1 h-[40px] min-h-0 max-h-[400px] textarea textarea-primary"
           placeholder={emptyChat ? "Enter a description..." : "Enter a request..."}
           value={textInput}
           ref={textareaRef}
+          rows={1}
           onChange={(event) => setTextInput(event.target.value)}
           onKeyDown={handleKeyDown}
           onInput={handleInputChange}
