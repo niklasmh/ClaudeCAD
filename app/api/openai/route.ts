@@ -24,8 +24,8 @@ export async function POST(req: Request) {
   const response = await client.chat.completions.create({
     messages,
     model,
-    temperature,
-    max_tokens,
+    //temperature,
+    //max_tokens,
   });
 
   return Response.json(response);

@@ -57,8 +57,11 @@ export enum LLMModel {
   GPT_4O_MINI = "gpt-4o-mini",
   GPT_O1 = "gpt-o1",
   //GPT_O1_MINI = "gpt-o1-mini", // No vision
+  GPT_O3 = "gpt-o3",
   //GPT_O3_MINI = "gpt-o3-mini", // No vision
-  GPT_4_5 = "gpt-4.5",
+  GPT_4_1 = "gpt-4.1",
+  GPT_4_1_MINI = "gpt-4.1-mini",
+  GPT_4_1_NANO = "gpt-4.1-nano",
 }
 
 export const defaultModel = LLMModel.CLAUDE_3_7;
@@ -75,8 +78,11 @@ export const llmModels: LLMModel[] = [
   LLMModel.GPT_4O_MINI,
   LLMModel.GPT_O1,
   //LLMModel.GPT_O1_MINI,
+  LLMModel.GPT_O3,
   //LLMModel.GPT_O3_MINI,
-  LLMModel.GPT_4_5,
+  LLMModel.GPT_4_1,
+  LLMModel.GPT_4_1_MINI,
+  LLMModel.GPT_4_1_NANO,
 ];
 
 export const llmModelsWithTools: LLMModel[] = [
@@ -86,6 +92,10 @@ export const llmModelsWithTools: LLMModel[] = [
   LLMModel.GPT_4O_MINI,
   LLMModel.GPT_O1,
   //LLMModel.GPT_O3_MINI,
+  LLMModel.GPT_O3,
+  LLMModel.GPT_4_1,
+  LLMModel.GPT_4_1_MINI,
+  LLMModel.GPT_4_1_NANO,
 ];
 
 export const llmModelsWithFormat: LLMModel[] = [
@@ -93,6 +103,10 @@ export const llmModelsWithFormat: LLMModel[] = [
   LLMModel.GPT_4O_MINI,
   LLMModel.GPT_O1,
   //LLMModel.GPT_O3_MINI,
+  LLMModel.GPT_O3,
+  LLMModel.GPT_4_1,
+  LLMModel.GPT_4_1_MINI,
+  LLMModel.GPT_4_1_NANO,
 ];
 
 export enum LLMModelEndpoint {
@@ -112,8 +126,11 @@ export const endpoints: Record<LLMModel, LLMModelEndpoint> = {
   [LLMModel.GPT_4O_MINI]: LLMModelEndpoint.OPENAI,
   [LLMModel.GPT_O1]: LLMModelEndpoint.OPENAI,
   //[LLMModel.GPT_O1_MINI]: LLMModelEndpoint.OPENAI,
+  [LLMModel.GPT_O3]: LLMModelEndpoint.OPENAI,
   //[LLMModel.GPT_O3_MINI]: LLMModelEndpoint.OPENAI,
-  [LLMModel.GPT_4_5]: LLMModelEndpoint.OPENAI,
+  [LLMModel.GPT_4_1]: LLMModelEndpoint.OPENAI,
+  [LLMModel.GPT_4_1_MINI]: LLMModelEndpoint.OPENAI,
+  [LLMModel.GPT_4_1_NANO]: LLMModelEndpoint.OPENAI,
 };
 
 export const endpointNames: Record<LLMModelEndpoint, string> = {
@@ -133,8 +150,11 @@ export const modelNames: Record<LLMModel, string> = {
   [LLMModel.GPT_4O_MINI]: "GPT-4o mini",
   [LLMModel.GPT_O1]: "GPT o1",
   //[LLMModel.GPT_O1_MINI]: "GPT o1-mini",
+  [LLMModel.GPT_O3]: "GPT o3",
   //[LLMModel.GPT_O3_MINI]: "GPT o3-mini",
-  [LLMModel.GPT_4_5]: "GPT 4.5",
+  [LLMModel.GPT_4_1]: "GPT 4.1",
+  [LLMModel.GPT_4_1_MINI]: "GPT 4.1 mini",
+  [LLMModel.GPT_4_1_NANO]: "GPT 4.1 nano",
 };
 
 export const isAnthropicKey = (key: string) => key.startsWith("sk-ant-");

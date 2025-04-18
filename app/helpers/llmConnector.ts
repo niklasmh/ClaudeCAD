@@ -105,8 +105,11 @@ export const llmConnector: LLMConnector = {
   "gpt-4o-mini": (messages) => openaiConnector("gpt-4o-mini", messages),
   "gpt-o1": (messages) => openaiConnector("gpt-o1", messages),
   "gpt-o1-mini": (messages) => openaiConnector("gpt-o1-mini", messages),
+  "gpt-o3": (messages) => openaiConnector("gpt-o3", messages),
   "gpt-o3-mini": (messages) => openaiConnector("gpt-o3-mini", messages),
-  "gpt-4.5": (messages) => openaiConnector("gpt-4.5", messages),
+  "gpt-4.1": (messages) => openaiConnector("gpt-4.1", messages),
+  "gpt-4.1-mini": (messages) => openaiConnector("gpt-4.1-mini", messages),
+  "gpt-4.1-nano": (messages) => openaiConnector("gpt-4.1-nano", messages),
 };
 
 const getSystemMessage = (messages: LLMMessage[]): string => {
@@ -289,10 +292,16 @@ const mapOpenAIModel = (model: string): OpenAI.Chat.ChatModel => {
       return "o1";
     case "gpt-o1-mini":
       return "o1-mini";
+    case "gpt-o3":
+      return "o3";
     case "gpt-o3-mini":
       return "o3-mini";
-    case "gpt-4.5":
-      return "gpt-4.5-preview";
+    case "gpt-4.1":
+      return "gpt-4.1";
+    case "gpt-4.1-mini":
+      return "gpt-4.1-mini";
+    case "gpt-4.1-nano":
+      return "gpt-4.1-nano";
     case "gpt-4o":
     default:
       return "gpt-4o";
